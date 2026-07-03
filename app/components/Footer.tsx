@@ -3,6 +3,7 @@ import Link from "next/link";
 const footerLinks = [
   { href: "/", label: "Начало" },
   { href: "/herbs", label: "Билки" },
+  { href: "/categories", label: "Категории" },
   { href: "/symptoms", label: "Симптоми" },
   { href: "/search", label: "Търсене" },
   { href: "/ai", label: "AI помощник" },

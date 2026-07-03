@@ -4,6 +4,7 @@ import AuthNav from "./AuthNav";
 const navLinks = [
   { href: "/", label: "Начало" },
   { href: "/herbs", label: "Билки" },
+  { href: "/categories", label: "Категории" },
   { href: "/symptoms", label: "Симптоми" },
   { href: "/search", label: "Търсене" },
   { href: "/ai", label: "AI помощник" },
