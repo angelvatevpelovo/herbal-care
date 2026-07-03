@@ -26,6 +26,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Herbal Care" }],
   creator: "Herbal Care",
+  icons: {
+    icon: "/herbal-care-icon.svg",
+    shortcut: "/herbal-care-icon.svg",
+    apple: "/herbal-care-icon.svg",
+  },
   openGraph: {
     title: "Herbal Care",
     description: "Образователна информация за билки, симптоми и природна грижа.",

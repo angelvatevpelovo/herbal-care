@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Herbal Care icon</title>
+  <desc id="desc">A square green icon with a gold circle and herbal leaf symbol.</desc>
+  <rect width="512" height="512" rx="112" fill="#052e1b"/>
+  <circle cx="256" cy="246" r="150" fill="#f5d76e"/>
+  <path d="M263 364C217 302 195 239 207 187C219 134 263 99 339 82C358 158 350 221 314 270C298 292 278 310 253 324" fill="#0f7a3a"/>
+  <path d="M256 366C270 310 259 258 224 210C188 160 135 130 65 119C59 196 79 255 126 296C160 326 203 345 256 354" fill="#2aa65a"/>
+  <path d="M259 360C259 274 282 202 328 144" stroke="#f7f4df" stroke-width="22" stroke-linecap="round"/>
+  <path d="M256 359C219 277 171 213 112 167" stroke="#f7f4df" stroke-width="22" stroke-linecap="round"/>
+  <text x="256" y="433" text-anchor="middle" fill="#f7f4df" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800">HC</text>
+</svg>

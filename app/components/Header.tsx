@@ -15,9 +15,17 @@ export default function Header() {
   return (
     <header className="rounded-2xl border border-emerald-800/70 bg-emerald-950/85 p-3 shadow-xl shadow-black/20 sm:rounded-3xl sm:p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <Link href="/" className="min-w-fit">
-          <span className="block text-xl font-bold text-yellow-200">Herbal Care</span>
-          <span className="block text-sm text-emerald-200">Образователна билкова грижа</span>
+        <Link href="/" className="flex min-w-fit items-center gap-3">
+          <img
+            src="/herbal-care-icon.svg"
+            alt=""
+            className="h-12 w-12 rounded-2xl border border-emerald-700 bg-emerald-900/60 p-1"
+            aria-hidden="true"
+          />
+          <span>
+            <span className="block text-xl font-bold text-yellow-200">Herbal Care</span>
+            <span className="block text-sm text-emerald-200">Образователна билкова грижа</span>
+          </span>
         </Link>
 
         <nav className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap" aria-label="Основна навигация">
