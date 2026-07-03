@@ -8,6 +8,8 @@ const footerLinks = [
   { href: "/ai", label: "AI помощник" },
   { href: "/about", label: "За Herbal Care" },
   { href: "/contact", label: "Контакт" },
+  { href: "/privacy", label: "Политика за поверителност" },
+  { href: "/terms", label: "Условия за ползване" },
 ];
 
 export default function Footer() {
