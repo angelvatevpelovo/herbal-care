@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminCategoryForm from "./AdminCategoryForm";
+import AdminHerbEditForm from "./AdminHerbEditForm";
 import AdminHerbForm from "./AdminHerbForm";
 import AdminHerbRelationsForm from "./AdminHerbRelationsForm";
 import AdminSymptomForm from "./AdminSymptomForm";
@@ -23,9 +24,18 @@ type FeedbackMessage = {
 };
 
 type AdminHerb = {
+  id: string;
   slug: string;
   name: string;
   latin: string | null;
+  emoji: string | null;
+  short_description: string | null;
+  description: string | null;
+  traditional_uses: string | null;
+  preparation: string | null;
+  precautions: string | null;
+  interactions: string | null;
+  when_to_see_doctor: string | null;
 };
 
 type AdminSymptom = {
@@ -121,6 +131,7 @@ export default function AdminClient() {
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
+  const [editingHerb, setEditingHerb] = useState<AdminHerb | null>(null);
   const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -217,7 +228,9 @@ export default function AdminClient() {
       ] = await Promise.all([
         client
           .from("herbs")
-          .select("slug, name, latin")
+          .select(
+            "id, slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+          )
           .order("name", { ascending: true }),
         client
           .from("symptoms")
@@ -332,6 +345,15 @@ export default function AdminClient() {
       ...current,
       herbs: current.herbs === null ? current.herbs : current.herbs + 1,
     }));
+  }
+
+  function handleHerbUpdated(updatedHerb: AdminHerb) {
+    setHerbs((current) =>
+      current
+        .map((herb) => (herb.id === updatedHerb.id ? updatedHerb : herb))
+        .sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setEditingHerb(updatedHerb);
   }
 
   function handleSymptomCreated(symptom: AdminSymptom) {
@@ -555,50 +577,69 @@ export default function AdminClient() {
             Все още няма добавени билки.
           </div>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-            <div className="hidden grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
-              <span>Име</span>
-              <span>Латинско име</span>
-              <span>Slug</span>
-              <span className="text-right">Връзка</span>
-            </div>
+          <>
+            {editingHerb ? (
+              <AdminHerbEditForm
+                herb={editingHerb}
+                onCancel={() => setEditingHerb(null)}
+                onUpdated={handleHerbUpdated}
+              />
+            ) : null}
 
-            <div className="divide-y divide-emerald-800/70">
-              {herbs.map((herb) => (
-                <article
-                  key={herb.slug}
-                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-4"
-                >
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Име
-                    </p>
-                    <p className="font-bold text-yellow-200">{herb.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Латинско име
-                    </p>
-                    <p className="break-words italic text-emerald-100">
-                      {herb.latin || "Не е посочено"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Slug
-                    </p>
-                    <p className="break-words font-mono text-sm text-emerald-50">{herb.slug}</p>
-                  </div>
-                  <Link
-                    href={`/herbs/${herb.slug}`}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+            <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+              <div className="hidden grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+                <span>Име</span>
+                <span>Латинско име</span>
+                <span>Slug</span>
+                <span className="text-right">Действия</span>
+              </div>
+
+              <div className="divide-y divide-emerald-800/70">
+                {herbs.map((herb) => (
+                  <article
+                    key={herb.id}
+                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-4"
                   >
-                    Виж
-                  </Link>
-                </article>
-              ))}
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Име
+                      </p>
+                      <p className="font-bold text-yellow-200">{herb.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Латинско име
+                      </p>
+                      <p className="break-words italic text-emerald-100">
+                        {herb.latin || "Не е посочено"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Slug
+                      </p>
+                      <p className="break-words font-mono text-sm text-emerald-50">{herb.slug}</p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                      <Link
+                        href={`/herbs/${herb.slug}`}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                      >
+                        Виж
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setEditingHerb(herb)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                      >
+                        Редактирай
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </section>
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type CreatedHerb = {
+type EditableHerb = {
   id: string;
   slug: string;
   name: string;
@@ -16,10 +16,6 @@ type CreatedHerb = {
   precautions: string | null;
   interactions: string | null;
   when_to_see_doctor: string | null;
-};
-
-type AdminHerbFormProps = {
-  onCreated?: (herb: CreatedHerb) => void;
 };
 
 type HerbFormValues = {
@@ -36,82 +32,61 @@ type HerbFormValues = {
   when_to_see_doctor: string;
 };
 
-const initialValues: HerbFormValues = {
-  slug: "",
-  name: "",
-  latin: "",
-  emoji: "",
-  short_description: "",
-  description: "",
-  traditional_uses: "",
-  preparation: "",
-  precautions: "",
-  interactions: "",
-  when_to_see_doctor: "",
+type AdminHerbEditFormProps = {
+  herb: EditableHerb;
+  onCancel: () => void;
+  onUpdated: (herb: EditableHerb) => void;
 };
 
 const textFields = [
-  { name: "slug", label: "Slug", required: true, placeholder: "naprimer-layka" },
-  { name: "name", label: "Име", required: true, placeholder: "Лайка" },
-  { name: "latin", label: "Латинско име", required: false, placeholder: "Matricaria chamomilla" },
-  { name: "emoji", label: "Емоджи", required: false, placeholder: "🌿" },
+  { name: "slug", label: "Slug", required: true },
+  { name: "name", label: "Име", required: true },
+  { name: "latin", label: "Латинско име", required: false },
+  { name: "emoji", label: "Емоджи", required: false },
 ] as const;
 
 const textareaFields = [
-  {
-    name: "short_description",
-    label: "Кратко описание",
-    required: true,
-    placeholder: "Кратко, предпазливо образователно описание.",
-  },
-  {
-    name: "description",
-    label: "Описание",
-    required: false,
-    placeholder: "Общо описание на билката без обещания за лечение.",
-  },
-  {
-    name: "traditional_uses",
-    label: "Традиционна употреба",
-    required: false,
-    placeholder: "Традиционно се използва... Може да подпомогне...",
-  },
-  {
-    name: "preparation",
-    label: "Начин на приготвяне",
-    required: false,
-    placeholder: "Образователна информация за традиционна подготовка.",
-  },
-  {
-    name: "precautions",
-    label: "Предпазни мерки",
-    required: false,
-    placeholder: "Опишете кога е нужна предпазливост.",
-  },
-  {
-    name: "interactions",
-    label: "Взаимодействия",
-    required: false,
-    placeholder: "Възможни взаимодействия с лекарства или състояния.",
-  },
-  {
-    name: "when_to_see_doctor",
-    label: "Кога да се потърси лекар",
-    required: false,
-    placeholder: "Силни, внезапни или продължителни симптоми...",
-  },
+  { name: "short_description", label: "Кратко описание", required: true, rows: 3 },
+  { name: "description", label: "Описание", required: false, rows: 5 },
+  { name: "traditional_uses", label: "Традиционна употреба", required: false, rows: 5 },
+  { name: "preparation", label: "Начин на приготвяне", required: false, rows: 5 },
+  { name: "precautions", label: "Предпазни мерки", required: false, rows: 5 },
+  { name: "interactions", label: "Взаимодействия", required: false, rows: 5 },
+  { name: "when_to_see_doctor", label: "Кога да се потърси лекар", required: false, rows: 5 },
 ] as const;
+
+function valuesFromHerb(herb: EditableHerb): HerbFormValues {
+  return {
+    slug: herb.slug ?? "",
+    name: herb.name ?? "",
+    latin: herb.latin ?? "",
+    emoji: herb.emoji ?? "",
+    short_description: herb.short_description ?? "",
+    description: herb.description ?? "",
+    traditional_uses: herb.traditional_uses ?? "",
+    preparation: herb.preparation ?? "",
+    precautions: herb.precautions ?? "",
+    interactions: herb.interactions ?? "",
+    when_to_see_doctor: herb.when_to_see_doctor ?? "",
+  };
+}
 
 function normalizeOptionalValue(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
-  const [values, setValues] = useState<HerbFormValues>(initialValues);
+export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHerbEditFormProps) {
+  const [values, setValues] = useState<HerbFormValues>(() => valuesFromHerb(herb));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValues(valuesFromHerb(herb));
+    setSuccessMessage(null);
+    setErrorMessage(null);
+  }, [herb]);
 
   function updateValue(name: keyof HerbFormValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
@@ -140,7 +115,7 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
 
     const { data, error } = await supabase
       .from("herbs")
-      .insert({
+      .update({
         slug,
         name,
         latin: normalizeOptionalValue(values.latin),
@@ -153,6 +128,7 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
         interactions: normalizeOptionalValue(values.interactions),
         when_to_see_doctor: normalizeOptionalValue(values.when_to_see_doctor),
       })
+      .eq("id", herb.id)
       .select(
         "id, slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
       )
@@ -161,21 +137,39 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
     setIsSubmitting(false);
 
     if (error || !data) {
-      setErrorMessage("Възникна проблем при добавяне на билката.");
+      setErrorMessage("Възникна проблем при обновяване на билката.");
       return;
     }
 
-    setValues(initialValues);
-    setSuccessMessage("Билката беше добавена успешно.");
-    onCreated?.(data as CreatedHerb);
+    setSuccessMessage("Билката беше обновена успешно.");
+    onUpdated(data as EditableHerb);
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-5 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6"
+      className="mt-5 rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 shadow-xl sm:p-6"
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+            Редакция
+          </p>
+          <h3 className="mt-2 text-2xl font-bold text-yellow-200">{herb.name}</h3>
+          <p className="mt-2 text-sm text-emerald-100">
+            Обновявайте само проверена, предпазливо формулирана образователна информация.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+        >
+          Затвори
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
         {textFields.map((field) => (
           <label key={field.name} className="block">
             <span className="text-sm font-semibold text-emerald-100">
@@ -187,7 +181,6 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
               required={field.required}
               value={values[field.name]}
               onChange={(event) => updateValue(field.name, event.target.value)}
-              placeholder={field.placeholder}
               className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
             />
           </label>
@@ -205,17 +198,11 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
               required={field.required}
               value={values[field.name]}
               onChange={(event) => updateValue(field.name, event.target.value)}
-              placeholder={field.placeholder}
-              rows={field.name === "short_description" ? 3 : 5}
+              rows={field.rows}
               className="mt-2 w-full resize-y rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
             />
           </label>
         ))}
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm leading-6 text-yellow-50">
-        Добавяйте само предпазливо формулирана образователна информация. Herbal Care не поставя
-        диагнози, не назначава лечение и не замества лекарска консултация.
       </div>
 
       {successMessage ? (
@@ -235,7 +222,7 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
         disabled={isSubmitting}
         className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-yellow-300 px-5 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        {isSubmitting ? "Добавяне..." : "Добави билка"}
+        {isSubmitting ? "Запазване..." : "Запази промените"}
       </button>
     </form>
   );
