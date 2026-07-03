@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminHerbForm from "./AdminHerbForm";
+import AdminHerbRelationsForm from "./AdminHerbRelationsForm";
 
 type AdminCard = {
   title: string;
@@ -398,6 +399,24 @@ export default function AdminClient() {
         </div>
 
         <AdminHerbForm onCreated={handleHerbCreated} />
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Връзки
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">
+              Свързване на билка със симптоми и категории
+            </h2>
+          </div>
+          <p className="text-sm text-emerald-200">
+            Изберете една билка и свързани симптоми или категории.
+          </p>
+        </div>
+
+        <AdminHerbRelationsForm />
       </section>
 
       <section className="mt-10">
