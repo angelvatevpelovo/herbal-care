@@ -110,6 +110,7 @@ export default function AdminClient() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
+  const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -293,6 +294,11 @@ export default function AdminClient() {
     );
   }
 
+  const emergencyAiCount = aiHistoryEntries.filter((entry) => entry.is_emergency).length;
+  const visibleAiHistoryEntries = showOnlyEmergencyAi
+    ? aiHistoryEntries.filter((entry) => entry.is_emergency)
+    : aiHistoryEntries;
+
   return (
     <section className="mt-8">
       <div className="rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
@@ -420,13 +426,32 @@ export default function AdminClient() {
           <p className="text-sm text-emerald-200">Показват се последните 20 AI записа.</p>
         </div>
 
+        <div className="mt-5 flex flex-col gap-3 rounded-3xl border border-emerald-800/70 bg-emerald-950/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-semibold text-yellow-200">Спешни сигнали: {emergencyAiCount}</p>
+          <button
+            type="button"
+            onClick={() => setShowOnlyEmergencyAi((current) => !current)}
+            className={
+              showOnlyEmergencyAi
+                ? "min-h-11 rounded-2xl border border-yellow-200 bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg"
+                : "min-h-11 rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+            }
+          >
+            {showOnlyEmergencyAi ? "Покажи всички AI записи" : "Покажи само спешни сигнали"}
+          </button>
+        </div>
+
         {aiHistoryEntries.length === 0 ? (
           <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
             Все още няма AI история.
           </div>
+        ) : visibleAiHistoryEntries.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Няма спешни сигнали в последните AI записи.
+          </div>
         ) : (
           <div className="mt-5 space-y-4">
-            {aiHistoryEntries.map((entry) => (
+            {visibleAiHistoryEntries.map((entry) => (
               <article
                 key={entry.id}
                 className={
