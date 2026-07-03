@@ -44,6 +44,12 @@ type AiHistoryEntry = {
   created_at: string | null;
 };
 
+type AdminProfile = {
+  email: string | null;
+  is_admin: boolean | null;
+  created_at: string | null;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -110,6 +116,7 @@ export default function AdminClient() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
+  const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -202,6 +209,7 @@ export default function AdminClient() {
         { data: categoriesData, error: categoriesError },
         { data: aiHistoryData, error: aiHistoryError },
         { data: feedback, error: feedbackError },
+        { data: profilesData, error: profilesError },
       ] = await Promise.all([
         client
           .from("herbs")
@@ -225,13 +233,25 @@ export default function AdminClient() {
           .select("id, name, email, message, created_at")
           .order("created_at", { ascending: false })
           .limit(20),
+        client
+          .from("profiles")
+          .select("email, is_admin, created_at")
+          .order("created_at", { ascending: false })
+          .limit(50),
       ]);
 
       if (!isMounted) {
         return;
       }
 
-      if (herbsError || symptomsError || categoriesError || aiHistoryError || feedbackError) {
+      if (
+        herbsError ||
+        symptomsError ||
+        categoriesError ||
+        aiHistoryError ||
+        feedbackError ||
+        profilesError
+      ) {
         setMessage("Не успяхме да заредим админ данните.");
       } else {
         setHerbs((herbsData ?? []) as AdminHerb[]);
@@ -239,6 +259,7 @@ export default function AdminClient() {
         setCategories((categoriesData ?? []) as AdminCategory[]);
         setAiHistoryEntries((aiHistoryData ?? []) as AiHistoryEntry[]);
         setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
+        setProfiles((profilesData ?? []) as AdminProfile[]);
       }
 
       setIsLoading(false);
@@ -351,6 +372,74 @@ export default function AdminClient() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Достъп
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Потребители</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Показват се последните 50 профила.</p>
+        </div>
+
+        {profiles.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма профили.
+          </div>
+        ) : (
+          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+            <div className="hidden grid-cols-[2fr_1fr_1fr] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <span>Имейл</span>
+              <span>Роля</span>
+              <span>Създаден</span>
+            </div>
+
+            <div className="divide-y divide-emerald-800/70">
+              {profiles.map((profile, index) => (
+                <article
+                  key={`${profile.email ?? "profile"}-${profile.created_at ?? index}`}
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[2fr_1fr_1fr] md:items-center md:gap-4"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Имейл
+                    </p>
+                    <p className="break-words text-emerald-50">
+                      {profile.email || "Няма имейл"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Роля
+                    </p>
+                    {profile.is_admin ? (
+                      <span className="inline-flex rounded-full border border-yellow-200/50 bg-yellow-300/20 px-3 py-1 text-sm font-bold text-yellow-100">
+                        Админ
+                      </span>
+                    ) : (
+                      <span className="inline-flex rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-1 text-sm font-bold text-emerald-50">
+                        Потребител
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Създаден
+                    </p>
+                    <p className="text-emerald-100">
+                      {profile.created_at
+                        ? new Date(profile.created_at).toLocaleString("bg-BG")
+                        : "Няма дата"}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="mt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
