@@ -73,14 +73,14 @@ export default async function SymptomsPage() {
   const symptoms = await getSymptomsWithHerbs();
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-10 sm:py-14">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-14">
       <Header />
 
       <section className="mb-8 mt-10 max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
           Образователен справочник
         </p>
-        <h1 className="mt-3 text-4xl font-bold text-emerald-50 sm:text-5xl">
+        <h1 className="mt-3 text-3xl font-bold text-emerald-50 sm:text-5xl">
           Търсене по симптом
         </h1>
         <p className="mt-4 text-lg leading-8 text-emerald-100">
@@ -102,9 +102,9 @@ export default async function SymptomsPage() {
         {symptoms.map((symptom) => (
           <article
             key={symptom.slug}
-            className="rounded-2xl border border-emerald-800/70 bg-emerald-950/70 p-6 shadow-xl shadow-black/20"
+            className="rounded-2xl border border-emerald-800/70 bg-emerald-950/70 p-5 shadow-xl shadow-black/20 sm:p-6"
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
                   Симптом

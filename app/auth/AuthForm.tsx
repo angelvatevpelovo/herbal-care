@@ -83,7 +83,7 @@ export default function AuthForm() {
   }
 
   return (
-    <section className="mt-8 rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10 sm:p-8">
+    <section className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
       <form
         className="space-y-5"
         onSubmit={(event) => {
@@ -123,12 +123,12 @@ export default function AuthForm() {
           />
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <button
             type="button"
             onClick={() => void handleSignUp()}
             disabled={isLoading}
-            className="rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70"
+            className="min-h-12 rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70"
           >
             Регистрация
           </button>
@@ -136,7 +136,7 @@ export default function AuthForm() {
             type="button"
             onClick={() => void handleSignIn()}
             disabled={isLoading}
-            className="rounded-2xl border border-emerald-700 bg-emerald-950 px-6 py-4 font-bold text-emerald-50 transition hover:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70"
+            className="min-h-12 rounded-2xl border border-emerald-700 bg-emerald-950 px-6 py-4 font-bold text-emerald-50 transition hover:bg-emerald-900 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70"
           >
             Вход
           </button>

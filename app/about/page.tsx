@@ -12,7 +12,7 @@ const doctorExamples = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-5xl">
         <Header />
 
@@ -20,7 +20,7 @@ export default function AboutPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
             Образователен проект
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-yellow-200 sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold text-yellow-200 sm:text-5xl">
             За Herbal Care
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">
@@ -31,7 +31,7 @@ export default function AboutPage() {
           </p>
         </header>
 
-        <section className="mt-8 rounded-3xl border border-red-300/40 bg-red-950/40 p-6 text-red-50 shadow-xl shadow-black/20">
+        <section className="mt-8 rounded-3xl border border-red-300/40 bg-red-950/40 p-5 text-red-50 shadow-xl shadow-black/20 sm:p-6">
           <h2 className="text-xl font-bold text-red-100">Медицински отказ от отговорност</h2>
           <p className="mt-3 leading-7">
             Herbal Care не поставя диагнози, не назначава лечение и не замества лекар,
@@ -40,7 +40,7 @@ export default function AboutPage() {
         </section>
 
         <section className="mt-8 grid gap-5 md:grid-cols-3">
-          <article className="rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10">
+          <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
             <h2 className="text-xl font-bold text-yellow-200">Билки</h2>
             <p className="mt-3 leading-7 text-emerald-50">
               Информация за традиционна употреба, предпазни мерки и възможни
@@ -48,7 +48,7 @@ export default function AboutPage() {
             </p>
           </article>
 
-          <article className="rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10">
+          <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
             <h2 className="text-xl font-bold text-yellow-200">Симптоми</h2>
             <p className="mt-3 leading-7 text-emerald-50">
               Образователни връзки между симптоми и билки, които може да се свързват с
@@ -56,7 +56,7 @@ export default function AboutPage() {
             </p>
           </article>
 
-          <article className="rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10">
+          <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
             <h2 className="text-xl font-bold text-yellow-200">AI помощ</h2>
             <p className="mt-3 leading-7 text-emerald-50">
               Внимателна помощ за обяснение на информация, без диагнози, предписания
@@ -65,7 +65,7 @@ export default function AboutPage() {
           </article>
         </section>
 
-        <section className="mt-8 rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-6 text-yellow-50">
+        <section className="mt-8 rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
           <h2 className="text-2xl font-bold text-yellow-100">
             Кога да потърсите лекар
           </h2>

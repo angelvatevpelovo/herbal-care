@@ -61,7 +61,7 @@ export default function ProfileClient() {
 
   if (isLoading) {
     return (
-      <div className="mt-8 rounded-3xl bg-white/10 p-6 text-emerald-100 ring-1 ring-white/10">
+      <div className="mt-8 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
         Зареждаме профила...
       </div>
     );
@@ -69,13 +69,13 @@ export default function ProfileClient() {
 
   if (!email) {
     return (
-      <div className="mt-8 rounded-3xl bg-white/10 p-6 ring-1 ring-white/10">
+      <div className="mt-8 rounded-3xl bg-white/10 p-5 ring-1 ring-white/10 sm:p-6">
         <p className="text-emerald-100">
           Не сте влезли в профила си. Влезте или се регистрирайте, за да използвате лични функции.
         </p>
         <Link
           href="/auth"
-          className="mt-5 inline-flex rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+          className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-yellow-300 px-5 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 sm:w-auto"
         >
           Вход / Регистрация
         </Link>
@@ -85,7 +85,7 @@ export default function ProfileClient() {
   }
 
   return (
-    <section className="mt-8 rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10 sm:p-8">
+    <section className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
         Влезли сте като
       </p>
@@ -96,7 +96,7 @@ export default function ProfileClient() {
       <button
         type="button"
         onClick={() => void handleLogout()}
-        className="mt-6 rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+        className="mt-6 min-h-12 w-full rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 sm:w-auto"
       >
         Изход
       </button>

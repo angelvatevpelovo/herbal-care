@@ -4,16 +4,16 @@ import Header from "./components/Header";
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 text-green-950">
-      <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
+      <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <Header />
 
-        <section className="flex flex-1 items-center py-16">
+        <section className="flex flex-1 items-center py-12 sm:py-16">
           <div className="max-w-3xl">
             <p className="mb-4 inline-block rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-700">
               🌿 Природна грижа, билки и полезна информация
             </p>
 
-            <h2 className="text-5xl font-bold leading-tight text-green-950">
+            <h2 className="text-4xl font-bold leading-tight text-green-950 sm:text-5xl">
               Твоят внимателен справочник за билки, симптоми и природна грижа.
             </h2>
 
@@ -28,31 +28,31 @@ export default function HomePage() {
               консултация.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Link
                 href="/herbs"
-                className="rounded-2xl bg-green-700 px-6 py-4 font-bold text-white shadow-lg transition hover:bg-green-800"
+                className="min-h-12 rounded-2xl bg-green-700 px-6 py-4 text-center font-bold text-white shadow-lg transition hover:bg-green-800"
               >
                 Разгледай билките
               </Link>
 
               <Link
                 href="/symptoms"
-                className="rounded-2xl border border-green-300 bg-white/70 px-6 py-4 font-bold text-green-800 transition hover:bg-green-100"
+                className="min-h-12 rounded-2xl border border-green-300 bg-white/70 px-6 py-4 text-center font-bold text-green-800 transition hover:bg-green-100"
               >
                 Търси по симптом
               </Link>
 
               <Link
                 href="/search"
-                className="rounded-2xl border border-green-300 bg-green-100 px-6 py-4 font-bold text-green-900 transition hover:bg-green-200"
+                className="min-h-12 rounded-2xl border border-green-300 bg-green-100 px-6 py-4 text-center font-bold text-green-900 transition hover:bg-green-200"
               >
                 Търси в Herbal Care
               </Link>
 
               <Link
                 href="/ai"
-                className="rounded-2xl border border-emerald-700 bg-emerald-950 px-6 py-4 font-bold text-emerald-50 shadow-lg transition hover:bg-emerald-900"
+                className="min-h-12 rounded-2xl border border-emerald-700 bg-emerald-950 px-6 py-4 text-center font-bold text-emerald-50 shadow-lg transition hover:bg-emerald-900"
               >
                 Попитай AI помощника
               </Link>
@@ -61,7 +61,7 @@ export default function HomePage() {
         </section>
 
         <section className="grid gap-5 pb-10 md:grid-cols-3">
-          <div className="rounded-3xl bg-white/80 p-6 shadow-sm">
+          <div className="rounded-3xl bg-white/80 p-5 shadow-sm sm:p-6">
             <div className="text-3xl" aria-hidden="true">
               🌱
             </div>
@@ -74,7 +74,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white/80 p-6 shadow-sm">
+          <div className="rounded-3xl bg-white/80 p-5 shadow-sm sm:p-6">
             <div className="text-3xl" aria-hidden="true">
               🩺
             </div>
@@ -87,7 +87,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white/80 p-6 shadow-sm">
+          <div className="rounded-3xl bg-white/80 p-5 shadow-sm sm:p-6">
             <div className="text-3xl" aria-hidden="true">
               🤖
             </div>

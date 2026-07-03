@@ -3,7 +3,7 @@ import ProfileClient from "./ProfileClient";
 
 export default function ProfilePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-4xl">
         <Header />
 
@@ -11,7 +11,7 @@ export default function ProfilePage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
             Профил
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-yellow-200 sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold text-yellow-200 sm:text-5xl">
             Моят профил
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">

@@ -119,7 +119,7 @@ export default function FavoriteHerbButton({ herbId }: FavoriteHerbButtonProps) 
     return (
       <Link
         href="/auth"
-        className="mt-6 inline-flex rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+        className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-yellow-300 px-5 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 sm:w-auto"
       >
         Влезте, за да добавите в любими
       </Link>
@@ -132,7 +132,7 @@ export default function FavoriteHerbButton({ herbId }: FavoriteHerbButtonProps) 
         type="button"
         onClick={() => void toggleFavorite()}
         disabled={isLoading}
-        className="rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70"
+        className="min-h-12 w-full rounded-2xl bg-yellow-300 px-5 py-3 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
         {favoriteId ? "Премахни от любими" : "Добави в любими"}
       </button>

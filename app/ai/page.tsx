@@ -12,7 +12,7 @@ const emergencyExamples = [
 
 export default function AiPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-5xl">
         <Header />
 
@@ -20,7 +20,7 @@ export default function AiPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
             Образователен помощник
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-yellow-200 sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold text-yellow-200 sm:text-5xl">
             AI помощник
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">
@@ -31,7 +31,7 @@ export default function AiPage() {
           </p>
         </header>
 
-        <section className="mt-8 rounded-3xl border border-red-300/40 bg-red-950/40 p-6 text-red-50 shadow-xl shadow-black/20">
+        <section className="mt-8 rounded-3xl border border-red-300/40 bg-red-950/40 p-5 text-red-50 shadow-xl shadow-black/20 sm:p-6">
           <h2 className="text-xl font-bold text-red-100">Медицинска безопасност</h2>
           <p className="mt-3 leading-7">
             AI помощникът не поставя диагноза, не назначава лечение и не замества лекар.

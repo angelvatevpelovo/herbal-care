@@ -57,7 +57,7 @@ export default function AIForm() {
   }
 
   return (
-    <section className="mt-8 rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10 sm:p-8">
+    <section className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -79,7 +79,7 @@ export default function AIForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-5 rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-5 min-h-12 w-full rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
         >
           {isLoading ? "Помощникът подготвя отговор..." : "Попитай помощника"}
         </button>

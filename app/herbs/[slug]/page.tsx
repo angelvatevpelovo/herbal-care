@@ -54,7 +54,7 @@ export default async function HerbDetailPage({
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-4xl">
         <Header />
 
@@ -62,12 +62,12 @@ export default async function HerbDetailPage({
           ← Назад към билките
         </Link>
 
-        <article className="mt-8 rounded-3xl bg-white/10 p-8 shadow-xl ring-1 ring-white/10">
-          <div className="text-6xl" aria-hidden="true">
+        <article className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
+          <div className="text-5xl sm:text-6xl" aria-hidden="true">
             {herb.emoji ?? "🌿"}
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold text-yellow-200">
+          <h1 className="mt-6 text-3xl font-bold text-yellow-200 sm:text-4xl">
             {herb.name}
           </h1>
 
@@ -78,7 +78,7 @@ export default async function HerbDetailPage({
           <FavoriteHerbButton herbId={herb.id} />
 
           {herb.short_description ? (
-            <p className="mt-5 rounded-2xl bg-green-950/50 p-5 leading-7 text-green-50 ring-1 ring-white/10">
+            <p className="mt-5 rounded-2xl bg-green-950/50 p-4 leading-7 text-green-50 ring-1 ring-white/10 sm:p-5">
               {herb.short_description}
             </p>
           ) : null}
@@ -115,7 +115,7 @@ export default async function HerbDetailPage({
 function Section({ title, text }: { title: string; text: string | null }) {
   return (
     <section>
-      <h2 className="text-2xl font-bold text-yellow-200">{title}</h2>
+      <h2 className="text-xl font-bold text-yellow-200 sm:text-2xl">{title}</h2>
       <p className="mt-3 leading-8 text-green-50">
         {text ?? "Няма добавена информация за тази секция."}
       </p>

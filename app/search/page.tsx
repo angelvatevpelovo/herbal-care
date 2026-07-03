@@ -72,7 +72,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const hasResults = herbs.length > 0 || symptoms.length > 0;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-6xl">
         <Header />
 
@@ -80,7 +80,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
             Образователно търсене
           </p>
-          <h1 className="mt-3 text-4xl font-bold text-yellow-200 sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-bold text-yellow-200 sm:text-5xl">
             Търсене
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">
@@ -89,7 +89,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </p>
         </header>
 
-        <form className="mt-8 rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10" action="/search">
+        <form className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6" action="/search">
           <label htmlFor="q" className="block text-lg font-bold text-yellow-200">
             Потърсете билки и симптоми
           </label>
@@ -104,7 +104,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             />
             <button
               type="submit"
-              className="rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950"
+              className="min-h-14 rounded-2xl bg-yellow-300 px-6 py-4 font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-100 focus:ring-offset-2 focus:ring-offset-green-950"
             >
               Търси
             </button>

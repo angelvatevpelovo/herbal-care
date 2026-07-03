@@ -34,7 +34,7 @@ export default async function HerbsPage() {
   const herbs = await getHerbs();
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
       <section className="mx-auto max-w-6xl">
         <Header />
 
@@ -43,7 +43,7 @@ export default async function HerbsPage() {
             ← Начало
           </Link>
 
-          <h1 className="mt-4 text-4xl font-bold text-yellow-200">Билки</h1>
+          <h1 className="mt-4 text-3xl font-bold text-yellow-200 sm:text-4xl">Билки</h1>
 
           <p className="mt-3 max-w-2xl leading-7 text-green-100">
             Тук ще откриеш образователна информация за билки, тяхната традиционна
@@ -57,7 +57,7 @@ export default async function HerbsPage() {
             <Link
               key={herb.slug}
               href={`/herbs/${herb.slug}`}
-              className="group rounded-3xl bg-white/10 p-6 shadow-xl ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+              className="group rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-yellow-300 sm:p-6"
             >
               <article>
                 <div className="text-4xl" aria-hidden="true">
@@ -85,7 +85,7 @@ export default async function HerbsPage() {
           ))}
         </div>
 
-        <div className="mt-10 rounded-3xl bg-yellow-100 p-6 text-yellow-950 ring-1 ring-yellow-200">
+        <div className="mt-10 rounded-3xl bg-yellow-100 p-5 text-yellow-950 ring-1 ring-yellow-200 sm:p-6">
           <h3 className="font-bold">Важно предупреждение</h3>
           <p className="mt-2 leading-7">
             Информацията в Herbal Care е образователна и не замества лекарска
