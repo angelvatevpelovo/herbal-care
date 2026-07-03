@@ -1,0 +1,18 @@
+{
+  "name": "Herbal Care",
+  "short_name": "Herbal Care",
+  "description": "Образователна информация за билки, симптоми и природна грижа.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#052e16",
+  "theme_color": "#166534",
+  "lang": "bg",
+  "icons": [
+    {
+      "src": "/herbal-care-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

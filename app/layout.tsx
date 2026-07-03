@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Footer from "./components/Footer";
 import "./globals.css";
@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Herbal Care" }],
   creator: "Herbal Care",
+  manifest: "/manifest.webmanifest",
   icons: {
     icon: "/herbal-care-icon.svg",
     shortcut: "/herbal-care-icon.svg",
@@ -42,6 +43,10 @@ export const metadata: Metadata = {
     title: "Herbal Care",
     description: "Образователна информация за билки, симптоми и природна грижа.",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#166534",
 };
 
 export default function RootLayout({
