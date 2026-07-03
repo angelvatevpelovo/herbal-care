@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import Header from "@/app/components/Header";
 import FavoriteHerbButton from "./FavoriteHerbButton";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +56,9 @@ export default async function HerbDetailPage({
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
       <section className="mx-auto max-w-4xl">
-        <Link href="/herbs" className="text-sm font-semibold text-yellow-300">
+        <Header />
+
+        <Link href="/herbs" className="mt-8 inline-flex text-sm font-semibold text-yellow-300">
           ← Назад към билките
         </Link>
 

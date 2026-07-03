@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Header from "@/app/components/Header";
 import AIForm from "./AIForm";
 
 const emergencyExamples = [
@@ -14,26 +14,7 @@ export default function AiPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
       <section className="mx-auto max-w-5xl">
-        <nav className="flex flex-wrap gap-3">
-          <Link
-            href="/"
-            className="rounded-full border border-emerald-700 bg-emerald-950/50 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
-          >
-            Начало
-          </Link>
-          <Link
-            href="/herbs"
-            className="rounded-full border border-emerald-700 bg-emerald-950/50 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
-          >
-            Билки
-          </Link>
-          <Link
-            href="/symptoms"
-            className="rounded-full border border-emerald-700 bg-emerald-950/50 px-4 py-2 text-sm font-semibold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
-          >
-            Симптоми
-          </Link>
-        </nav>
+        <Header />
 
         <header className="mt-10 max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">

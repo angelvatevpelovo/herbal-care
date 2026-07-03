@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Header from "@/app/components/Header";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,9 @@ export default async function SymptomsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 sm:py-14">
-      <section className="mb-8 max-w-3xl">
+      <Header />
+
+      <section className="mb-8 mt-10 max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-300">
           Образователен справочник
         </p>

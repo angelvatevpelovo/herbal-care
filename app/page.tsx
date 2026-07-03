@@ -1,41 +1,11 @@
 import Link from "next/link";
-
-const navLinks = [
-  { href: "/", label: "Начало" },
-  { href: "/herbs", label: "Билки" },
-  { href: "/symptoms", label: "Симптоми" },
-  { href: "/search", label: "Търсене" },
-  { href: "/ai", label: "AI помощник" },
-  { href: "/favorites", label: "Любими" },
-  { href: "/profile", label: "Профил" },
-  { href: "/about", label: "За Herbal Care" },
-  { href: "/auth", label: "Вход / Регистрация" },
-];
+import Header from "./components/Header";
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-lime-50 text-green-950">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
-        <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-green-800">Herbal Care</h1>
-            <p className="text-sm text-green-700">
-              Образователен помощник за билки и природна грижа
-            </p>
-          </div>
-
-          <nav className="flex flex-wrap gap-3" aria-label="Основна навигация">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-full border border-green-300 bg-white/60 px-4 py-2 text-sm font-semibold text-green-800 transition hover:bg-green-100"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </header>
+        <Header />
 
         <section className="flex flex-1 items-center py-16">
           <div className="max-w-3xl">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import Header from "@/app/components/Header";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,9 @@ export default async function HerbsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-6 py-8 text-white">
       <section className="mx-auto max-w-6xl">
-        <header className="mb-10">
+        <Header />
+
+        <header className="mb-10 mt-10">
           <Link href="/" className="text-sm font-semibold text-yellow-300">
             ← Начало
           </Link>
