@@ -36,6 +36,14 @@ type AdminCategory = {
   description: string | null;
 };
 
+type AiHistoryEntry = {
+  id: string;
+  question: string;
+  answer: string;
+  is_emergency: boolean;
+  created_at: string | null;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -88,6 +96,10 @@ const statCards = [
   { key: "aiHistory", label: "AI записи" },
 ] as const;
 
+function getAnswerPreview(answer: string) {
+  return answer.length > 220 ? `${answer.slice(0, 220)}...` : answer;
+}
+
 export default function AdminClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -97,6 +109,7 @@ export default function AdminClient() {
   const [symptoms, setSymptoms] = useState<AdminSymptom[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
+  const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -186,6 +199,7 @@ export default function AdminClient() {
         { data: herbsData, error: herbsError },
         { data: symptomsData, error: symptomsError },
         { data: categoriesData, error: categoriesError },
+        { data: aiHistoryData, error: aiHistoryError },
         { data: feedback, error: feedbackError },
       ] = await Promise.all([
         client
@@ -201,6 +215,11 @@ export default function AdminClient() {
           .select("slug, name, description")
           .order("name", { ascending: true }),
         client
+          .from("ai_history")
+          .select("id, question, answer, is_emergency, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+        client
           .from("feedback")
           .select("id, name, email, message, created_at")
           .order("created_at", { ascending: false })
@@ -211,12 +230,13 @@ export default function AdminClient() {
         return;
       }
 
-      if (herbsError || symptomsError || categoriesError || feedbackError) {
+      if (herbsError || symptomsError || categoriesError || aiHistoryError || feedbackError) {
         setMessage("Не успяхме да заредим админ данните.");
       } else {
         setHerbs((herbsData ?? []) as AdminHerb[]);
         setSymptoms((symptomsData ?? []) as AdminSymptom[]);
         setCategories((categoriesData ?? []) as AdminCategory[]);
+        setAiHistoryEntries((aiHistoryData ?? []) as AiHistoryEntry[]);
         setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
       }
 
@@ -385,6 +405,68 @@ export default function AdminClient() {
                 </article>
               ))}
             </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Безопасност
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">AI история и сигнали</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Показват се последните 20 AI записа.</p>
+        </div>
+
+        {aiHistoryEntries.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма AI история.
+          </div>
+        ) : (
+          <div className="mt-5 space-y-4">
+            {aiHistoryEntries.map((entry) => (
+              <article
+                key={entry.id}
+                className={
+                  entry.is_emergency
+                    ? "rounded-3xl border border-red-300/50 bg-red-950/50 p-5 shadow-xl shadow-black/20 sm:p-6"
+                    : "rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6"
+                }
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                      Въпрос
+                    </p>
+                    <h3 className="mt-2 text-xl font-bold text-yellow-200">{entry.question}</h3>
+                    <p className="mt-2 text-sm text-emerald-200">
+                      {entry.created_at
+                        ? new Date(entry.created_at).toLocaleString("bg-BG")
+                        : "Няма дата"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={
+                      entry.is_emergency
+                        ? "rounded-full border border-red-200/40 bg-red-900/70 px-3 py-2 text-sm font-bold text-red-50"
+                        : "rounded-full border border-emerald-700 bg-emerald-900/70 px-3 py-2 text-sm font-bold text-emerald-50"
+                    }
+                  >
+                    {entry.is_emergency ? "Спешен сигнал" : "Образователен отговор"}
+                  </span>
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-emerald-800 bg-emerald-950/60 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                    Преглед на отговора
+                  </p>
+                  <p className="mt-3 leading-7 text-emerald-50">{getAnswerPreview(entry.answer)}</p>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>
