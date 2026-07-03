@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/favorites", label: "Любими" },
   { href: "/profile", label: "Профил" },
   { href: "/about", label: "За Herbal Care" },
+  { href: "/contact", label: "Контакт" },
   { href: "/auth", label: "Вход / Регистрация" },
 ];
 

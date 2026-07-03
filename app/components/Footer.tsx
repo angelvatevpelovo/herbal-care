@@ -7,6 +7,7 @@ const footerLinks = [
   { href: "/search", label: "Търсене" },
   { href: "/ai", label: "AI помощник" },
   { href: "/about", label: "За Herbal Care" },
+  { href: "/contact", label: "Контакт" },
 ];
 
 export default function Footer() {
