@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminCategoryForm from "./AdminCategoryForm";
 import AdminHerbForm from "./AdminHerbForm";
 import AdminHerbRelationsForm from "./AdminHerbRelationsForm";
+import AdminSymptomForm from "./AdminSymptomForm";
 
 type AdminCard = {
   title: string;
@@ -332,6 +334,26 @@ export default function AdminClient() {
     }));
   }
 
+  function handleSymptomCreated(symptom: AdminSymptom) {
+    setSymptoms((current) =>
+      [...current, symptom].sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setStats((current) => ({
+      ...current,
+      symptoms: current.symptoms === null ? current.symptoms : current.symptoms + 1,
+    }));
+  }
+
+  function handleCategoryCreated(category: AdminCategory) {
+    setCategories((current) =>
+      [...current, category].sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setStats((current) => ({
+      ...current,
+      categories: current.categories === null ? current.categories : current.categories + 1,
+    }));
+  }
+
   return (
     <section className="mt-8">
       <div className="rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
@@ -399,6 +421,36 @@ export default function AdminClient() {
         </div>
 
         <AdminHerbForm onCreated={handleHerbCreated} />
+      </section>
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="text-2xl font-bold text-yellow-200">Добавяне на симптом</h2>
+            <p className="text-sm text-emerald-200">
+              Задължителни полета: slug и име. Описанието е по избор.
+            </p>
+          </div>
+
+          <AdminSymptomForm onCreated={handleSymptomCreated} />
+        </div>
+
+        <div>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="text-2xl font-bold text-yellow-200">Добавяне на категория</h2>
+            <p className="text-sm text-emerald-200">
+              Задължителни полета: slug и име. Описанието е по избор.
+            </p>
+          </div>
+
+          <AdminCategoryForm onCreated={handleCategoryCreated} />
+        </div>
       </section>
 
       <section className="mt-10">
