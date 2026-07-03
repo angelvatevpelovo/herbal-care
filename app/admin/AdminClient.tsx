@@ -24,6 +24,18 @@ type AdminHerb = {
   latin: string | null;
 };
 
+type AdminSymptom = {
+  slug: string;
+  name: string;
+  description: string | null;
+};
+
+type AdminCategory = {
+  slug: string;
+  name: string;
+  description: string | null;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -82,6 +94,8 @@ export default function AdminClient() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState<AdminStats>(initialStats);
   const [herbs, setHerbs] = useState<AdminHerb[]>([]);
+  const [symptoms, setSymptoms] = useState<AdminSymptom[]>([]);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -170,11 +184,21 @@ export default function AdminClient() {
 
       const [
         { data: herbsData, error: herbsError },
+        { data: symptomsData, error: symptomsError },
+        { data: categoriesData, error: categoriesError },
         { data: feedback, error: feedbackError },
       ] = await Promise.all([
         client
           .from("herbs")
           .select("slug, name, latin")
+          .order("name", { ascending: true }),
+        client
+          .from("symptoms")
+          .select("slug, name, description")
+          .order("name", { ascending: true }),
+        client
+          .from("categories")
+          .select("slug, name, description")
           .order("name", { ascending: true }),
         client
           .from("feedback")
@@ -187,10 +211,12 @@ export default function AdminClient() {
         return;
       }
 
-      if (herbsError || feedbackError) {
+      if (herbsError || symptomsError || categoriesError || feedbackError) {
         setMessage("Не успяхме да заредим админ данните.");
       } else {
         setHerbs((herbsData ?? []) as AdminHerb[]);
+        setSymptoms((symptomsData ?? []) as AdminSymptom[]);
+        setCategories((categoriesData ?? []) as AdminCategory[]);
         setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
       }
 
@@ -352,6 +378,125 @@ export default function AdminClient() {
                   </div>
                   <Link
                     href={`/herbs/${herb.slug}`}
+                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                  >
+                    Виж
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Симптоми в базата</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Подредени по име.</p>
+        </div>
+
+        {symptoms.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма добавени симптоми.
+          </div>
+        ) : (
+          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+            <div className="hidden grid-cols-[1fr_1fr_2fr] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <span>Име</span>
+              <span>Slug</span>
+              <span>Описание</span>
+            </div>
+
+            <div className="divide-y divide-emerald-800/70">
+              {symptoms.map((symptom) => (
+                <article
+                  key={symptom.slug}
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr] md:items-start md:gap-4"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Име
+                    </p>
+                    <p className="font-bold text-yellow-200">{symptom.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Slug
+                    </p>
+                    <p className="break-words font-mono text-sm text-emerald-50">{symptom.slug}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Описание
+                    </p>
+                    <p className="leading-7 text-emerald-100">
+                      {symptom.description || "Няма добавено описание."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Категории в базата</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Подредени по име.</p>
+        </div>
+
+        {categories.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма добавени категории.
+          </div>
+        ) : (
+          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+            <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <span>Име</span>
+              <span>Slug</span>
+              <span>Описание</span>
+              <span className="text-right">Връзка</span>
+            </div>
+
+            <div className="divide-y divide-emerald-800/70">
+              {categories.map((category) => (
+                <article
+                  key={category.slug}
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Име
+                    </p>
+                    <p className="font-bold text-yellow-200">{category.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Slug
+                    </p>
+                    <p className="break-words font-mono text-sm text-emerald-50">{category.slug}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Описание
+                    </p>
+                    <p className="leading-7 text-emerald-100">
+                      {category.description || "Няма добавено описание."}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/categories/${category.slug}`}
                     className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
                   >
                     Виж
