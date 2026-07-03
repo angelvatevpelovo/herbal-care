@@ -18,6 +18,12 @@ type FeedbackMessage = {
   created_at: string | null;
 };
 
+type AdminHerb = {
+  slug: string;
+  name: string;
+  latin: string | null;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -75,6 +81,7 @@ export default function AdminClient() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [stats, setStats] = useState<AdminStats>(initialStats);
+  const [herbs, setHerbs] = useState<AdminHerb[]>([]);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -161,19 +168,29 @@ export default function AdminClient() {
         aiHistory: aiHistoryCount,
       });
 
-      const { data: feedback, error: feedbackError } = await client
-        .from("feedback")
-        .select("id, name, email, message, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const [
+        { data: herbsData, error: herbsError },
+        { data: feedback, error: feedbackError },
+      ] = await Promise.all([
+        client
+          .from("herbs")
+          .select("slug, name, latin")
+          .order("name", { ascending: true }),
+        client
+          .from("feedback")
+          .select("id, name, email, message, created_at")
+          .order("created_at", { ascending: false })
+          .limit(20),
+      ]);
 
       if (!isMounted) {
         return;
       }
 
-      if (feedbackError) {
-        setMessage("Не успяхме да заредим обратната връзка.");
+      if (herbsError || feedbackError) {
+        setMessage("Не успяхме да заредим админ данните.");
       } else {
+        setHerbs((herbsData ?? []) as AdminHerb[]);
         setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
       }
 
@@ -282,6 +299,69 @@ export default function AdminClient() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Билки в базата</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Подредени по име.</p>
+        </div>
+
+        {herbs.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма добавени билки.
+          </div>
+        ) : (
+          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+            <div className="hidden grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <span>Име</span>
+              <span>Латинско име</span>
+              <span>Slug</span>
+              <span className="text-right">Връзка</span>
+            </div>
+
+            <div className="divide-y divide-emerald-800/70">
+              {herbs.map((herb) => (
+                <article
+                  key={herb.slug}
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-4"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Име
+                    </p>
+                    <p className="font-bold text-yellow-200">{herb.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Латинско име
+                    </p>
+                    <p className="break-words italic text-emerald-100">
+                      {herb.latin || "Не е посочено"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Slug
+                    </p>
+                    <p className="break-words font-mono text-sm text-emerald-50">{herb.slug}</p>
+                  </div>
+                  <Link
+                    href={`/herbs/${herb.slug}`}
+                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                  >
+                    Виж
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="mt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
