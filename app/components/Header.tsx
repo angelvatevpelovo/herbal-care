@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AuthNav from "./AuthNav";
 
 const navLinks = [
   { href: "/", label: "Начало" },
@@ -6,11 +7,8 @@ const navLinks = [
   { href: "/symptoms", label: "Симптоми" },
   { href: "/search", label: "Търсене" },
   { href: "/ai", label: "AI помощник" },
-  { href: "/favorites", label: "Любими" },
-  { href: "/profile", label: "Профил" },
   { href: "/about", label: "За Herbal Care" },
   { href: "/contact", label: "Контакт" },
-  { href: "/auth", label: "Вход / Регистрация" },
 ];
 
 export default function Header() {
@@ -32,6 +30,7 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <AuthNav />
         </nav>
       </div>
     </header>
