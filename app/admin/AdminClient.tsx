@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminHerbForm from "./AdminHerbForm";
 
 type AdminCard = {
   title: string;
@@ -320,6 +321,16 @@ export default function AdminClient() {
     ? aiHistoryEntries.filter((entry) => entry.is_emergency)
     : aiHistoryEntries;
 
+  function handleHerbCreated(herb: AdminHerb) {
+    setHerbs((current) =>
+      [...current, herb].sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setStats((current) => ({
+      ...current,
+      herbs: current.herbs === null ? current.herbs : current.herbs + 1,
+    }));
+  }
+
   return (
     <section className="mt-8">
       <div className="rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
@@ -372,6 +383,22 @@ export default function AdminClient() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Съдържание
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Добавяне на нова билка</h2>
+          </div>
+          <p className="text-sm text-emerald-200">
+            Задължителни полета: slug, име и кратко описание.
+          </p>
+        </div>
+
+        <AdminHerbForm onCreated={handleHerbCreated} />
+      </section>
 
       <section className="mt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
