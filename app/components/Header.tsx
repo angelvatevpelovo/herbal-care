@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/search", label: "Търсене" },
   { href: "/ai", label: "AI помощник" },
   { href: "/ai-history", label: "AI история" },
+  { href: "/admin", label: "Админ" },
   { href: "/about", label: "За Herbal Care" },
   { href: "/contact", label: "Контакт" },
 ];
