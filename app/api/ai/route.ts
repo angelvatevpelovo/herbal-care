@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 const emergencyKeywords = [
@@ -30,6 +31,12 @@ type HerbSymptom = {
 type RelatedLink = {
   label: string;
   href: string;
+};
+
+type AiResponsePayload = {
+  answer: string;
+  isEmergency: boolean;
+  relatedLinks: RelatedLink[];
 };
 
 function normalizeText(text: string) {
@@ -123,6 +130,60 @@ function buildAnswer(relatedLinks: RelatedLink[]) {
   return `Разбирам въпроса Ви. Това не е диагноза и не е лечение.${relatedText} Информацията е образователна и описва теми, които може да се свързват с традиционна употреба. При силни, внезапни или продължителни симптоми потърсете лекар.`;
 }
 
+function getBearerToken(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  return authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : null;
+}
+
+async function getCurrentUserId(token: string) {
+  if (!supabase) {
+    return null;
+  }
+
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
+
+  if (error || !user) {
+    return null;
+  }
+
+  return user.id;
+}
+
+async function saveAiHistory(request: Request, question: string, payload: AiResponsePayload) {
+  const token = getBearerToken(request);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!token || !supabaseUrl || !supabaseAnonKey) {
+    return;
+  }
+
+  const userId = await getCurrentUserId(token);
+
+  if (!userId) {
+    return;
+  }
+
+  const authenticatedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  await authenticatedSupabase.from("ai_history").insert({
+    user_id: userId,
+    question,
+    answer: payload.answer,
+    is_emergency: payload.isEmergency,
+  });
+}
+
 export async function POST(request: Request) {
   let body: unknown;
 
@@ -153,20 +214,27 @@ export async function POST(request: Request) {
   }
 
   if (hasEmergencyKeyword(message)) {
-    return NextResponse.json({
+    const payload = {
       answer:
         "Описвате симптоми, които може да изискват спешна медицинска помощ. Моля, потърсете лекар или спешна помощ.",
       isEmergency: true,
       relatedLinks: [],
-    });
+    };
+
+    await saveAiHistory(request, message, payload);
+
+    return NextResponse.json(payload);
   }
 
   const { herbs, symptoms, herbSymptoms } = await fetchSupabaseContext();
   const relatedLinks = findRelatedLinks(message, herbs, symptoms, herbSymptoms);
-
-  return NextResponse.json({
+  const payload = {
     answer: buildAnswer(relatedLinks),
     isEmergency: false,
     relatedLinks,
-  });
+  };
+
+  await saveAiHistory(request, message, payload);
+
+  return NextResponse.json(payload);
 }
