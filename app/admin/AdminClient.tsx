@@ -18,6 +18,14 @@ type FeedbackMessage = {
   created_at: string | null;
 };
 
+type AdminStats = {
+  herbs: number | null;
+  symptoms: number | null;
+  categories: number | null;
+  feedback: number | null;
+  aiHistory: number | null;
+};
+
 const adminCards: AdminCard[] = [
   {
     title: "Билки",
@@ -46,10 +54,27 @@ const adminCards: AdminCard[] = [
   },
 ];
 
+const initialStats: AdminStats = {
+  herbs: null,
+  symptoms: null,
+  categories: null,
+  feedback: null,
+  aiHistory: null,
+};
+
+const statCards = [
+  { key: "herbs", label: "Билки" },
+  { key: "symptoms", label: "Симптоми" },
+  { key: "categories", label: "Категории" },
+  { key: "feedback", label: "Съобщения" },
+  { key: "aiHistory", label: "AI записи" },
+] as const;
+
 export default function AdminClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [stats, setStats] = useState<AdminStats>(initialStats);
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -65,9 +90,11 @@ export default function AdminClient() {
         return;
       }
 
+      const client = supabase;
+
       const {
         data: { user },
-      } = await supabase.auth.getUser();
+      } = await client.auth.getUser();
 
       if (!isMounted) {
         return;
@@ -81,7 +108,7 @@ export default function AdminClient() {
 
       setIsLoggedIn(true);
 
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("profiles")
         .select("is_admin")
         .eq("id", user.id)
@@ -105,7 +132,36 @@ export default function AdminClient() {
         return;
       }
 
-      const { data: feedback, error: feedbackError } = await supabase
+      const countRows = async (table: string) => {
+        const { count, error } = await client
+          .from(table)
+          .select("*", { count: "exact", head: true });
+
+        return error ? null : count;
+      };
+
+      const [herbsCount, symptomsCount, categoriesCount, feedbackCount, aiHistoryCount] =
+        await Promise.all([
+          countRows("herbs"),
+          countRows("symptoms"),
+          countRows("categories"),
+          countRows("feedback"),
+          countRows("ai_history"),
+        ]);
+
+      if (!isMounted) {
+        return;
+      }
+
+      setStats({
+        herbs: herbsCount,
+        symptoms: symptomsCount,
+        categories: categoriesCount,
+        feedback: feedbackCount,
+        aiHistory: aiHistoryCount,
+      });
+
+      const { data: feedback, error: feedbackError } = await client
         .from("feedback")
         .select("id, name, email, message, created_at")
         .order("created_at", { ascending: false })
@@ -182,6 +238,29 @@ export default function AdminClient() {
           Този панел е подготвен за бъдещо управление на съдържание. Засега не променя данни.
         </p>
       </div>
+
+      <section className="mt-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+          Статистика
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-yellow-200">Общ преглед</h2>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {statCards.map((card) => (
+            <article
+              key={card.key}
+              className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10"
+            >
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                {card.label}
+              </p>
+              <p className="mt-3 text-4xl font-bold text-yellow-200">
+                {stats[card.key] ?? "—"}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {adminCards.map((card) => (
