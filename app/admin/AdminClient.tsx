@@ -10,6 +10,14 @@ type AdminCard = {
   href: string;
 };
 
+type FeedbackMessage = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  message: string;
+  created_at: string | null;
+};
+
 const adminCards: AdminCard[] = [
   {
     title: "Билки",
@@ -42,6 +50,7 @@ export default function AdminClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,8 +93,32 @@ export default function AdminClient() {
 
       if (error) {
         setMessage("Не успяхме да проверим администраторския достъп.");
+        setIsLoading(false);
+        return;
+      }
+
+      const hasAdminAccess = Boolean(data?.is_admin);
+      setIsAdmin(hasAdminAccess);
+
+      if (!hasAdminAccess) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: feedback, error: feedbackError } = await supabase
+        .from("feedback")
+        .select("id, name, email, message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (feedbackError) {
+        setMessage("Не успяхме да заредим обратната връзка.");
       } else {
-        setIsAdmin(Boolean(data?.is_admin));
+        setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
       }
 
       setIsLoading(false);
@@ -170,6 +203,71 @@ export default function AdminClient() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Последни съобщения
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Обратна връзка</h2>
+          </div>
+          <p className="text-sm text-emerald-200">Показват се последните 20 съобщения.</p>
+        </div>
+
+        {feedbackMessages.length === 0 ? (
+          <div className="mt-5 rounded-3xl bg-white/10 p-5 text-emerald-100 ring-1 ring-white/10 sm:p-6">
+            Все още няма получени съобщения.
+          </div>
+        ) : (
+          <div className="mt-5 space-y-4">
+            {feedbackMessages.map((feedback) => (
+              <article
+                key={feedback.id}
+                className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6"
+              >
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                      Име
+                    </p>
+                    <p className="mt-1 break-words text-emerald-50">
+                      {feedback.name || "Не е посочено"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                      Имейл
+                    </p>
+                    <p className="mt-1 break-words text-emerald-50">
+                      {feedback.email || "Не е посочен"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                      Получено
+                    </p>
+                    <p className="mt-1 text-emerald-50">
+                      {feedback.created_at
+                        ? new Date(feedback.created_at).toLocaleString("bg-BG")
+                        : "Няма дата"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-emerald-800 bg-emerald-950/60 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                    Съобщение
+                  </p>
+                  <p className="mt-3 whitespace-pre-wrap leading-7 text-emerald-50">
+                    {feedback.message}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </section>
   );
 }
