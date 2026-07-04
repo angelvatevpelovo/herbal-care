@@ -120,6 +120,26 @@ const statCards = [
   { key: "aiHistory", label: "AI записи" },
 ] as const;
 
+const mvpChecklistItems = [
+  "Начална страница работи",
+  "Билки се зареждат от Supabase",
+  "Детайлна страница на билка работи",
+  "Симптоми се зареждат",
+  "Категории се зареждат",
+  "Търсенето работи",
+  "AI помощникът връща безопасни отговори",
+  "Emergency предупрежденията работят",
+  "Вход / Регистрация работи",
+  "Профилът работи",
+  "Любими билки работят",
+  "Contact формата записва feedback",
+  "Privacy и Terms са достъпни",
+  "Admin панелът е защитен",
+  "CRUD за билки/симптоми/категории работи",
+  "Сайтът е mobile-friendly",
+  "Vercel deploy е активен",
+] as const;
+
 function getAnswerPreview(answer: string) {
   return answer.length > 220 ? `${answer.slice(0, 220)}...` : answer;
 }
@@ -560,6 +580,34 @@ export default function AdminClient() {
           </Link>
         ))}
       </div>
+
+      <section className="mt-10 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Готовност
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">MVP проверка</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-emerald-200">
+            Използвайте този списък преди всяко по-голямо качване или промяна.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {mvpChecklistItems.map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-3 rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4"
+            >
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-sm font-black text-green-950">
+                ✓
+              </span>
+              <span className="leading-6 text-emerald-50">{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="mt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
