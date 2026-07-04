@@ -140,6 +140,10 @@ export default function AdminClient() {
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
   const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [adminActionMessage, setAdminActionMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -400,6 +404,98 @@ export default function AdminClient() {
     setEditingCategory(updatedCategory);
   }
 
+  async function handleHerbDelete(herb: AdminHerb) {
+    if (!supabase || !window.confirm("Сигурни ли сте, че искате да изтриете тази билка?")) {
+      return;
+    }
+
+    setAdminActionMessage(null);
+
+    const { error } = await supabase.from("herbs").delete().eq("id", herb.id);
+
+    if (error) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при изтриване на билката.",
+      });
+      return;
+    }
+
+    setHerbs((current) => current.filter((currentHerb) => currentHerb.id !== herb.id));
+    setEditingHerb((current) => (current?.id === herb.id ? null : current));
+    setStats((current) => ({
+      ...current,
+      herbs: current.herbs === null ? current.herbs : Math.max(current.herbs - 1, 0),
+    }));
+    setAdminActionMessage({
+      type: "success",
+      text: "Билката беше изтрита успешно.",
+    });
+  }
+
+  async function handleSymptomDelete(symptom: AdminSymptom) {
+    if (!supabase || !window.confirm("Сигурни ли сте, че искате да изтриете този симптом?")) {
+      return;
+    }
+
+    setAdminActionMessage(null);
+
+    const { error } = await supabase.from("symptoms").delete().eq("id", symptom.id);
+
+    if (error) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при изтриване на симптома.",
+      });
+      return;
+    }
+
+    setSymptoms((current) =>
+      current.filter((currentSymptom) => currentSymptom.id !== symptom.id)
+    );
+    setEditingSymptom((current) => (current?.id === symptom.id ? null : current));
+    setStats((current) => ({
+      ...current,
+      symptoms: current.symptoms === null ? current.symptoms : Math.max(current.symptoms - 1, 0),
+    }));
+    setAdminActionMessage({
+      type: "success",
+      text: "Симптомът беше изтрит успешно.",
+    });
+  }
+
+  async function handleCategoryDelete(category: AdminCategory) {
+    if (!supabase || !window.confirm("Сигурни ли сте, че искате да изтриете тази категория?")) {
+      return;
+    }
+
+    setAdminActionMessage(null);
+
+    const { error } = await supabase.from("categories").delete().eq("id", category.id);
+
+    if (error) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при изтриване на категорията.",
+      });
+      return;
+    }
+
+    setCategories((current) =>
+      current.filter((currentCategory) => currentCategory.id !== category.id)
+    );
+    setEditingCategory((current) => (current?.id === category.id ? null : current));
+    setStats((current) => ({
+      ...current,
+      categories:
+        current.categories === null ? current.categories : Math.max(current.categories - 1, 0),
+    }));
+    setAdminActionMessage({
+      type: "success",
+      text: "Категорията беше изтрита успешно.",
+    });
+  }
+
   return (
     <section className="mt-8">
       <div className="rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
@@ -408,6 +504,18 @@ export default function AdminClient() {
           Този панел е подготвен за бъдещо управление на съдържание. Засега не променя данни.
         </p>
       </div>
+
+      {adminActionMessage ? (
+        <div
+          className={
+            adminActionMessage.type === "success"
+              ? "mt-5 rounded-3xl border border-emerald-300/40 bg-emerald-900/70 p-5 text-emerald-50"
+              : "mt-5 rounded-3xl border border-red-300/40 bg-red-950/70 p-5 text-red-50"
+          }
+        >
+          {adminActionMessage.text}
+        </div>
+      ) : null}
 
       <section className="mt-8">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
@@ -658,6 +766,13 @@ export default function AdminClient() {
                       >
                         Редактирай
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleHerbDelete(herb)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                      >
+                        Изтрий
+                      </button>
                     </div>
                   </article>
                 ))}
@@ -807,13 +922,22 @@ export default function AdminClient() {
                         {symptom.description || "Няма добавено описание."}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setEditingSymptom(symptom)}
-                      className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 md:justify-self-end"
-                    >
-                      Редактирай
-                    </button>
+                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setEditingSymptom(symptom)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                      >
+                        Редактирай
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleSymptomDelete(symptom)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                      >
+                        Изтрий
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -894,6 +1018,13 @@ export default function AdminClient() {
                         className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
                       >
                         Редактирай
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleCategoryDelete(category)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                      >
+                        Изтрий
                       </button>
                     </div>
                   </article>
