@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type CreatedCategory = {
+  id: string;
   slug: string;
   name: string;
   description: string | null;
@@ -57,7 +58,7 @@ export default function AdminCategoryForm({ onCreated }: AdminCategoryFormProps)
         name,
         description: normalizeOptionalValue(values.description),
       })
-      .select("slug, name, description")
+      .select("id, slug, name, description")
       .single();
 
     setIsSubmitting(false);

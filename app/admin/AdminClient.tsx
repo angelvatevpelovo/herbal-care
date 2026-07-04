@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminCategoryEditForm from "./AdminCategoryEditForm";
 import AdminCategoryForm from "./AdminCategoryForm";
 import AdminHerbEditForm from "./AdminHerbEditForm";
 import AdminHerbForm from "./AdminHerbForm";
 import AdminHerbRelationsForm from "./AdminHerbRelationsForm";
+import AdminSymptomEditForm from "./AdminSymptomEditForm";
 import AdminSymptomForm from "./AdminSymptomForm";
 
 type AdminCard = {
@@ -39,12 +41,14 @@ type AdminHerb = {
 };
 
 type AdminSymptom = {
+  id: string;
   slug: string;
   name: string;
   description: string | null;
 };
 
 type AdminCategory = {
+  id: string;
   slug: string;
   name: string;
   description: string | null;
@@ -132,6 +136,8 @@ export default function AdminClient() {
   const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [editingHerb, setEditingHerb] = useState<AdminHerb | null>(null);
+  const [editingSymptom, setEditingSymptom] = useState<AdminSymptom | null>(null);
+  const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
   const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -234,11 +240,11 @@ export default function AdminClient() {
           .order("name", { ascending: true }),
         client
           .from("symptoms")
-          .select("slug, name, description")
+          .select("id, slug, name, description")
           .order("name", { ascending: true }),
         client
           .from("categories")
-          .select("slug, name, description")
+          .select("id, slug, name, description")
           .order("name", { ascending: true }),
         client
           .from("ai_history")
@@ -366,6 +372,15 @@ export default function AdminClient() {
     }));
   }
 
+  function handleSymptomUpdated(updatedSymptom: AdminSymptom) {
+    setSymptoms((current) =>
+      current
+        .map((symptom) => (symptom.id === updatedSymptom.id ? updatedSymptom : symptom))
+        .sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setEditingSymptom(updatedSymptom);
+  }
+
   function handleCategoryCreated(category: AdminCategory) {
     setCategories((current) =>
       [...current, category].sort((first, second) => first.name.localeCompare(second.name, "bg"))
@@ -374,6 +389,15 @@ export default function AdminClient() {
       ...current,
       categories: current.categories === null ? current.categories : current.categories + 1,
     }));
+  }
+
+  function handleCategoryUpdated(updatedCategory: AdminCategory) {
+    setCategories((current) =>
+      current
+        .map((category) => (category.id === updatedCategory.id ? updatedCategory : category))
+        .sort((first, second) => first.name.localeCompare(second.name, "bg"))
+    );
+    setEditingCategory(updatedCategory);
   }
 
   return (
@@ -740,43 +764,61 @@ export default function AdminClient() {
             Все още няма добавени симптоми.
           </div>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-            <div className="hidden grid-cols-[1fr_1fr_2fr] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
-              <span>Име</span>
-              <span>Slug</span>
-              <span>Описание</span>
-            </div>
+          <>
+            {editingSymptom ? (
+              <AdminSymptomEditForm
+                symptom={editingSymptom}
+                onCancel={() => setEditingSymptom(null)}
+                onUpdated={handleSymptomUpdated}
+              />
+            ) : null}
 
-            <div className="divide-y divide-emerald-800/70">
-              {symptoms.map((symptom) => (
-                <article
-                  key={symptom.slug}
-                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr] md:items-start md:gap-4"
-                >
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Име
-                    </p>
-                    <p className="font-bold text-yellow-200">{symptom.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Slug
-                    </p>
-                    <p className="break-words font-mono text-sm text-emerald-50">{symptom.slug}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Описание
-                    </p>
-                    <p className="leading-7 text-emerald-100">
-                      {symptom.description || "Няма добавено описание."}
-                    </p>
-                  </div>
-                </article>
-              ))}
+            <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+              <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+                <span>Име</span>
+                <span>Slug</span>
+                <span>Описание</span>
+                <span className="text-right">Действия</span>
+              </div>
+
+              <div className="divide-y divide-emerald-800/70">
+                {symptoms.map((symptom) => (
+                  <article
+                    key={symptom.id}
+                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Име
+                      </p>
+                      <p className="font-bold text-yellow-200">{symptom.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Slug
+                      </p>
+                      <p className="break-words font-mono text-sm text-emerald-50">{symptom.slug}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Описание
+                      </p>
+                      <p className="leading-7 text-emerald-100">
+                        {symptom.description || "Няма добавено описание."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingSymptom(symptom)}
+                      className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 md:justify-self-end"
+                    >
+                      Редактирай
+                    </button>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </section>
 
@@ -796,50 +838,69 @@ export default function AdminClient() {
             Все още няма добавени категории.
           </div>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-            <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
-              <span>Име</span>
-              <span>Slug</span>
-              <span>Описание</span>
-              <span className="text-right">Връзка</span>
-            </div>
+          <>
+            {editingCategory ? (
+              <AdminCategoryEditForm
+                category={editingCategory}
+                onCancel={() => setEditingCategory(null)}
+                onUpdated={handleCategoryUpdated}
+              />
+            ) : null}
 
-            <div className="divide-y divide-emerald-800/70">
-              {categories.map((category) => (
-                <article
-                  key={category.slug}
-                  className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
-                >
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Име
-                    </p>
-                    <p className="font-bold text-yellow-200">{category.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Slug
-                    </p>
-                    <p className="break-words font-mono text-sm text-emerald-50">{category.slug}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                      Описание
-                    </p>
-                    <p className="leading-7 text-emerald-100">
-                      {category.description || "Няма добавено описание."}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/categories/${category.slug}`}
-                    className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+            <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+              <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+                <span>Име</span>
+                <span>Slug</span>
+                <span>Описание</span>
+                <span className="text-right">Действия</span>
+              </div>
+
+              <div className="divide-y divide-emerald-800/70">
+                {categories.map((category) => (
+                  <article
+                    key={category.id}
+                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
                   >
-                    Виж
-                  </Link>
-                </article>
-              ))}
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Име
+                      </p>
+                      <p className="font-bold text-yellow-200">{category.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Slug
+                      </p>
+                      <p className="break-words font-mono text-sm text-emerald-50">{category.slug}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                        Описание
+                      </p>
+                      <p className="leading-7 text-emerald-100">
+                        {category.description || "Няма добавено описание."}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                      <Link
+                        href={`/categories/${category.slug}`}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                      >
+                        Виж
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCategory(category)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                      >
+                        Редактирай
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </section>
 

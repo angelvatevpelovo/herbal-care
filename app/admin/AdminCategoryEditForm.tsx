@@ -1,35 +1,49 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type CreatedSymptom = {
+type EditableCategory = {
   id: string;
   slug: string;
   name: string;
   description: string | null;
 };
 
-type AdminSymptomFormProps = {
-  onCreated?: (symptom: CreatedSymptom) => void;
+type AdminCategoryEditFormProps = {
+  category: EditableCategory;
+  onCancel: () => void;
+  onUpdated: (category: EditableCategory) => void;
 };
 
-const initialValues = {
-  slug: "",
-  name: "",
-  description: "",
-};
+function valuesFromCategory(category: EditableCategory) {
+  return {
+    slug: category.slug ?? "",
+    name: category.name ?? "",
+    description: category.description ?? "",
+  };
+}
 
 function normalizeOptionalValue(value: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
-  const [values, setValues] = useState(initialValues);
+export default function AdminCategoryEditForm({
+  category,
+  onCancel,
+  onUpdated,
+}: AdminCategoryEditFormProps) {
+  const [values, setValues] = useState(() => valuesFromCategory(category));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValues(valuesFromCategory(category));
+    setSuccessMessage(null);
+    setErrorMessage(null);
+  }, [category]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,33 +66,49 @@ export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
     setIsSubmitting(true);
 
     const { data, error } = await supabase
-      .from("symptoms")
-      .insert({
+      .from("categories")
+      .update({
         slug,
         name,
         description: normalizeOptionalValue(values.description),
       })
+      .eq("id", category.id)
       .select("id, slug, name, description")
       .single();
 
     setIsSubmitting(false);
 
     if (error || !data) {
-      setErrorMessage("Възникна проблем при добавяне на симптома.");
+      setErrorMessage("Възникна проблем при обновяване на категорията.");
       return;
     }
 
-    setValues(initialValues);
-    setSuccessMessage("Симптомът беше добавен успешно.");
-    onCreated?.(data as CreatedSymptom);
+    setSuccessMessage("Категорията беше обновена успешно.");
+    onUpdated(data as EditableCategory);
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-5 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6"
+      className="mt-5 rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 shadow-xl sm:p-6"
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+            Редакция
+          </p>
+          <h3 className="mt-2 text-2xl font-bold text-yellow-200">{category.name}</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+        >
+          Затвори
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
         <label className="block">
           <span className="text-sm font-semibold text-emerald-100">Slug *</span>
           <input
@@ -86,8 +116,7 @@ export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
             required
             value={values.slug}
             onChange={(event) => setValues((current) => ({ ...current, slug: event.target.value }))}
-            placeholder="stres"
-            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
           />
         </label>
 
@@ -98,8 +127,7 @@ export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
             required
             value={values.name}
             onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))}
-            placeholder="Стрес"
-            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
           />
         </label>
       </div>
@@ -111,9 +139,8 @@ export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
           onChange={(event) =>
             setValues((current) => ({ ...current, description: event.target.value }))
           }
-          placeholder="Кратко образователно описание на симптома."
           rows={4}
-          className="mt-2 w-full resize-y rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+          className="mt-2 w-full resize-y rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
         />
       </label>
 
@@ -134,7 +161,7 @@ export default function AdminSymptomForm({ onCreated }: AdminSymptomFormProps) {
         disabled={isSubmitting}
         className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-yellow-300 px-5 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
       >
-        {isSubmitting ? "Добавяне..." : "Добави симптом"}
+        {isSubmitting ? "Запазване..." : "Запази промените"}
       </button>
     </form>
   );
