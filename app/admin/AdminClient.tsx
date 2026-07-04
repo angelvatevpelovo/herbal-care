@@ -76,6 +76,15 @@ type AdminStats = {
   aiHistory: number | null;
 };
 
+type HerbContentField =
+  | "short_description"
+  | "description"
+  | "traditional_uses"
+  | "preparation"
+  | "precautions"
+  | "interactions"
+  | "when_to_see_doctor";
+
 const adminCards: AdminCard[] = [
   {
     title: "Билки",
@@ -154,8 +163,24 @@ const contentQualityChecklistItems = [
   "Билката е свързана с категории",
 ] as const;
 
+const herbContentFields: { key: HerbContentField; label: string }[] = [
+  { key: "short_description", label: "кратко описание" },
+  { key: "description", label: "подробно описание" },
+  { key: "traditional_uses", label: "традиционна употреба" },
+  { key: "preparation", label: "начин на приготвяне" },
+  { key: "precautions", label: "предпазни мерки" },
+  { key: "interactions", label: "взаимодействия с лекарства" },
+  { key: "when_to_see_doctor", label: "кога да се потърси лекар" },
+];
+
 function getAnswerPreview(answer: string) {
   return answer.length > 220 ? `${answer.slice(0, 220)}...` : answer;
+}
+
+function getMissingHerbContentFields(herb: AdminHerb) {
+  return herbContentFields
+    .filter(({ key }) => !herb[key]?.trim())
+    .map(({ label }) => label);
 }
 
 export default function AdminClient() {
@@ -380,6 +405,10 @@ export default function AdminClient() {
   const visibleAiHistoryEntries = showOnlyEmergencyAi
     ? aiHistoryEntries.filter((entry) => entry.is_emergency)
     : aiHistoryEntries;
+  const completeHerbsCount = herbs.filter(
+    (herb) => getMissingHerbContentFields(herb).length === 0
+  ).length;
+  const incompleteHerbsCount = herbs.length - completeHerbsCount;
 
   function handleHerbCreated(herb: AdminHerb) {
     setHerbs((current) =>
@@ -808,6 +837,21 @@ export default function AdminClient() {
           </div>
         ) : (
           <>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-3xl border border-emerald-300/30 bg-emerald-900/50 p-5 text-emerald-50">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                  Пълни билки
+                </p>
+                <p className="mt-2 text-3xl font-bold text-yellow-200">{completeHerbsCount}</p>
+              </div>
+              <div className="rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-5 text-yellow-50">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-yellow-100">
+                  Непълни билки
+                </p>
+                <p className="mt-2 text-3xl font-bold text-yellow-200">{incompleteHerbsCount}</p>
+              </div>
+            </div>
+
             {editingHerb ? (
               <AdminHerbEditForm
                 herb={editingHerb}
@@ -817,63 +861,84 @@ export default function AdminClient() {
             ) : null}
 
             <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-              <div className="hidden grid-cols-[1fr_1fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <div className="hidden grid-cols-[1fr_1fr_1fr_1.4fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
                 <span>Име</span>
                 <span>Латинско име</span>
                 <span>Slug</span>
+                <span>Съдържание</span>
                 <span className="text-right">Действия</span>
               </div>
 
               <div className="divide-y divide-emerald-800/70">
-                {herbs.map((herb) => (
-                  <article
-                    key={herb.id}
-                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-center md:gap-4"
-                  >
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Име
-                      </p>
-                      <p className="font-bold text-yellow-200">{herb.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Латинско име
-                      </p>
-                      <p className="break-words italic text-emerald-100">
-                        {herb.latin || "Не е посочено"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Slug
-                      </p>
-                      <p className="break-words font-mono text-sm text-emerald-50">{herb.slug}</p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
-                      <Link
-                        href={`/herbs/${herb.slug}`}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
-                      >
-                        Виж
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => setEditingHerb(herb)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
-                      >
-                        Редактирай
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleHerbDelete(herb)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
-                      >
-                        Изтрий
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {herbs.map((herb) => {
+                  const missingFields = getMissingHerbContentFields(herb);
+                  const hasCompleteContent = missingFields.length === 0;
+
+                  return (
+                    <article
+                      key={herb.id}
+                      className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_1.4fr_auto] md:items-start md:gap-4"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Име
+                        </p>
+                        <p className="font-bold text-yellow-200">{herb.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Латинско име
+                        </p>
+                        <p className="break-words italic text-emerald-100">
+                          {herb.latin || "Не е посочено"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Slug
+                        </p>
+                        <p className="break-words font-mono text-sm text-emerald-50">{herb.slug}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Съдържание
+                        </p>
+                        {hasCompleteContent ? (
+                          <p className="font-bold text-emerald-200">✅ Пълно съдържание</p>
+                        ) : (
+                          <div>
+                            <p className="font-bold text-yellow-100">⚠️ Непълно съдържание</p>
+                            <p className="mt-2 text-sm leading-6 text-emerald-100">
+                              Липсва: {missingFields.join(", ")}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                        <Link
+                          href={`/herbs/${herb.slug}`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                        >
+                          Виж
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setEditingHerb(herb)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                        >
+                          Редактирай
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleHerbDelete(herb)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                        >
+                          Изтрий
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </div>
           </>
