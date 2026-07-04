@@ -140,6 +140,20 @@ const mvpChecklistItems = [
   "Vercel deploy е активен",
 ] as const;
 
+const contentQualityChecklistItems = [
+  "Има ясно кратко описание",
+  "Има подробно описание",
+  "Има традиционна употреба",
+  "Има начин на приготвяне",
+  "Има предпазни мерки",
+  "Има взаимодействия с лекарства",
+  "Има кога да се потърси лекар",
+  "Текстът не обещава лечение",
+  'Използва внимателни думи като "може", "традиционно", "при някои хора"',
+  "Билката е свързана със симптоми",
+  "Билката е свързана с категории",
+] as const;
+
 function getAnswerPreview(answer: string) {
   return answer.length > 220 ? `${answer.slice(0, 220)}...` : answer;
 }
@@ -601,6 +615,42 @@ export default function AdminClient() {
               className="flex items-start gap-3 rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4"
             >
               <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-sm font-black text-green-950">
+                ✓
+              </span>
+              <span className="leading-6 text-emerald-50">{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Безопасност на съдържанието
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">
+              Проверка на съдържанието
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-emerald-200">
+            Използвайте този списък при добавяне или редактиране на билки, за да поддържате
+            Herbal Care безопасен и полезен.
+          </p>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-4 text-sm leading-6 text-yellow-50">
+          Не добавяйте твърдения за гарантирано лечение, диагнози или заместване на лекарска
+          консултация.
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {contentQualityChecklistItems.map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-3 rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4"
+            >
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-300 text-sm font-black text-green-950">
                 ✓
               </span>
               <span className="leading-6 text-emerald-50">{item}</span>
