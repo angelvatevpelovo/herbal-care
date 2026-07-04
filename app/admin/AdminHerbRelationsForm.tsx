@@ -9,7 +9,15 @@ type RelationOption = {
   slug: string;
 };
 
-export default function AdminHerbRelationsForm() {
+type AdminHerbRelationsFormProps = {
+  onSaved?: (relations: {
+    herbId: string;
+    symptomIds: string[];
+    categoryIds: string[];
+  }) => void;
+};
+
+export default function AdminHerbRelationsForm({ onSaved }: AdminHerbRelationsFormProps) {
   const [herbs, setHerbs] = useState<RelationOption[]>([]);
   const [symptoms, setSymptoms] = useState<RelationOption[]>([]);
   const [categories, setCategories] = useState<RelationOption[]>([]);
@@ -123,6 +131,11 @@ export default function AdminHerbRelationsForm() {
       return;
     }
 
+    onSaved?.({
+      herbId: selectedHerbId,
+      symptomIds: selectedSymptomIds,
+      categoryIds: selectedCategoryIds,
+    });
     setSelectedSymptomIds([]);
     setSelectedCategoryIds([]);
     setSuccessMessage("Връзките бяха запазени успешно.");

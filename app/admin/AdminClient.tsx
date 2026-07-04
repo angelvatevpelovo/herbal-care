@@ -68,6 +68,16 @@ type AdminProfile = {
   created_at: string | null;
 };
 
+type AdminHerbSymptomRelation = {
+  herb_id: string;
+  symptom_id: string;
+};
+
+type AdminHerbCategoryRelation = {
+  herb_id: string;
+  category_id: string;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -194,6 +204,12 @@ export default function AdminClient() {
   const [feedbackMessages, setFeedbackMessages] = useState<FeedbackMessage[]>([]);
   const [aiHistoryEntries, setAiHistoryEntries] = useState<AiHistoryEntry[]>([]);
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
+  const [herbSymptomRelations, setHerbSymptomRelations] = useState<AdminHerbSymptomRelation[]>(
+    []
+  );
+  const [herbCategoryRelations, setHerbCategoryRelations] = useState<
+    AdminHerbCategoryRelation[]
+  >([]);
   const [editingHerb, setEditingHerb] = useState<AdminHerb | null>(null);
   const [editingSymptom, setEditingSymptom] = useState<AdminSymptom | null>(null);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
@@ -294,6 +310,8 @@ export default function AdminClient() {
         { data: aiHistoryData, error: aiHistoryError },
         { data: feedback, error: feedbackError },
         { data: profilesData, error: profilesError },
+        { data: herbSymptomRelationsData, error: herbSymptomRelationsError },
+        { data: herbCategoryRelationsData, error: herbCategoryRelationsError },
       ] = await Promise.all([
         client
           .from("herbs")
@@ -324,6 +342,8 @@ export default function AdminClient() {
           .select("email, is_admin, created_at")
           .order("created_at", { ascending: false })
           .limit(50),
+        client.from("herb_symptoms").select("herb_id, symptom_id"),
+        client.from("herb_categories").select("herb_id, category_id"),
       ]);
 
       if (!isMounted) {
@@ -336,7 +356,9 @@ export default function AdminClient() {
         categoriesError ||
         aiHistoryError ||
         feedbackError ||
-        profilesError
+        profilesError ||
+        herbSymptomRelationsError ||
+        herbCategoryRelationsError
       ) {
         setMessage("Не успяхме да заредим админ данните.");
       } else {
@@ -346,6 +368,12 @@ export default function AdminClient() {
         setAiHistoryEntries((aiHistoryData ?? []) as AiHistoryEntry[]);
         setFeedbackMessages((feedback ?? []) as FeedbackMessage[]);
         setProfiles((profilesData ?? []) as AdminProfile[]);
+        setHerbSymptomRelations(
+          (herbSymptomRelationsData ?? []) as AdminHerbSymptomRelation[]
+        );
+        setHerbCategoryRelations(
+          (herbCategoryRelationsData ?? []) as AdminHerbCategoryRelation[]
+        );
       }
 
       setIsLoading(false);
@@ -409,6 +437,17 @@ export default function AdminClient() {
     (herb) => getMissingHerbContentFields(herb).length === 0
   ).length;
   const incompleteHerbsCount = herbs.length - completeHerbsCount;
+  const herbIdsWithSymptoms = new Set(herbSymptomRelations.map((relation) => relation.herb_id));
+  const herbIdsWithCategories = new Set(
+    herbCategoryRelations.map((relation) => relation.herb_id)
+  );
+  const herbsWithSymptomsCount = herbs.filter((herb) => herbIdsWithSymptoms.has(herb.id)).length;
+  const herbsWithCategoriesCount = herbs.filter((herb) =>
+    herbIdsWithCategories.has(herb.id)
+  ).length;
+  const herbsWithoutRelationsCount = herbs.filter(
+    (herb) => !herbIdsWithSymptoms.has(herb.id) && !herbIdsWithCategories.has(herb.id)
+  ).length;
 
   function handleHerbCreated(herb: AdminHerb) {
     setHerbs((current) =>
@@ -427,6 +466,38 @@ export default function AdminClient() {
         .sort((first, second) => first.name.localeCompare(second.name, "bg"))
     );
     setEditingHerb(updatedHerb);
+  }
+
+  function handleHerbRelationsSaved({
+    herbId,
+    symptomIds,
+    categoryIds,
+  }: {
+    herbId: string;
+    symptomIds: string[];
+    categoryIds: string[];
+  }) {
+    setHerbSymptomRelations((current) => {
+      const existingKeys = new Set(
+        current.map((relation) => `${relation.herb_id}:${relation.symptom_id}`)
+      );
+      const newRelations = symptomIds
+        .map((symptomId) => ({ herb_id: herbId, symptom_id: symptomId }))
+        .filter((relation) => !existingKeys.has(`${relation.herb_id}:${relation.symptom_id}`));
+
+      return [...current, ...newRelations];
+    });
+
+    setHerbCategoryRelations((current) => {
+      const existingKeys = new Set(
+        current.map((relation) => `${relation.herb_id}:${relation.category_id}`)
+      );
+      const newRelations = categoryIds
+        .map((categoryId) => ({ herb_id: herbId, category_id: categoryId }))
+        .filter((relation) => !existingKeys.has(`${relation.herb_id}:${relation.category_id}`));
+
+      return [...current, ...newRelations];
+    });
   }
 
   function handleSymptomCreated(symptom: AdminSymptom) {
@@ -485,6 +556,12 @@ export default function AdminClient() {
     }
 
     setHerbs((current) => current.filter((currentHerb) => currentHerb.id !== herb.id));
+    setHerbSymptomRelations((current) =>
+      current.filter((relation) => relation.herb_id !== herb.id)
+    );
+    setHerbCategoryRelations((current) =>
+      current.filter((relation) => relation.herb_id !== herb.id)
+    );
     setEditingHerb((current) => (current?.id === herb.id ? null : current));
     setStats((current) => ({
       ...current,
@@ -749,7 +826,7 @@ export default function AdminClient() {
           </p>
         </div>
 
-        <AdminHerbRelationsForm />
+        <AdminHerbRelationsForm onSaved={handleHerbRelationsSaved} />
       </section>
 
       <section className="mt-10">
@@ -837,7 +914,7 @@ export default function AdminClient() {
           </div>
         ) : (
           <>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="rounded-3xl border border-emerald-300/30 bg-emerald-900/50 p-5 text-emerald-50">
                 <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-200">
                   Пълни билки
@@ -850,6 +927,30 @@ export default function AdminClient() {
                 </p>
                 <p className="mt-2 text-3xl font-bold text-yellow-200">{incompleteHerbsCount}</p>
               </div>
+              <div className="rounded-3xl border border-emerald-300/30 bg-emerald-900/50 p-5 text-emerald-50">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                  Билки със симптоми
+                </p>
+                <p className="mt-2 text-3xl font-bold text-yellow-200">
+                  {herbsWithSymptomsCount}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-emerald-300/30 bg-emerald-900/50 p-5 text-emerald-50">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-200">
+                  Билки с категории
+                </p>
+                <p className="mt-2 text-3xl font-bold text-yellow-200">
+                  {herbsWithCategoriesCount}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-red-300/30 bg-red-950/40 p-5 text-red-50">
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-red-100">
+                  Билки без връзки
+                </p>
+                <p className="mt-2 text-3xl font-bold text-yellow-200">
+                  {herbsWithoutRelationsCount}
+                </p>
+              </div>
             </div>
 
             {editingHerb ? (
@@ -861,11 +962,12 @@ export default function AdminClient() {
             ) : null}
 
             <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-              <div className="hidden grid-cols-[1fr_1fr_1fr_1.4fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <div className="hidden grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
                 <span>Име</span>
                 <span>Латинско име</span>
                 <span>Slug</span>
                 <span>Съдържание</span>
+                <span>Връзки</span>
                 <span className="text-right">Действия</span>
               </div>
 
@@ -873,11 +975,20 @@ export default function AdminClient() {
                 {herbs.map((herb) => {
                   const missingFields = getMissingHerbContentFields(herb);
                   const hasCompleteContent = missingFields.length === 0;
+                  const hasSymptoms = herbIdsWithSymptoms.has(herb.id);
+                  const hasCategories = herbIdsWithCategories.has(herb.id);
+                  const relationStatus = hasSymptoms
+                    ? hasCategories
+                      ? "✅ Свързана със симптоми и категории"
+                      : "⚠️ Липсват свързани категории"
+                    : hasCategories
+                      ? "⚠️ Липсват свързани симптоми"
+                      : "⚠️ Липсват симптоми и категории";
 
                   return (
                     <article
                       key={herb.id}
-                      className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_1.4fr_auto] md:items-start md:gap-4"
+                      className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr_auto] md:items-start md:gap-4"
                     >
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
@@ -913,6 +1024,20 @@ export default function AdminClient() {
                             </p>
                           </div>
                         )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Връзки
+                        </p>
+                        <p
+                          className={
+                            hasSymptoms && hasCategories
+                              ? "font-bold text-emerald-200"
+                              : "font-bold leading-6 text-yellow-100"
+                          }
+                        >
+                          {relationStatus}
+                        </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
                         <Link
