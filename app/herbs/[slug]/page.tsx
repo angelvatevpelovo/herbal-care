@@ -22,6 +22,18 @@ type HerbDetail = {
   when_to_see_doctor: string | null;
 };
 
+type HerbRecipe = {
+  id: string;
+  herb_id: string;
+  title: string | null;
+  preparation_type: string | null;
+  ingredients: string | null;
+  instructions: string | null;
+  dosage_note: string | null;
+  safety_note: string | null;
+  created_at: string | null;
+};
+
 async function getHerb(slug: string): Promise<HerbDetail | null> {
   if (!supabase) {
     throw new Error("Supabase is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
@@ -42,6 +54,26 @@ async function getHerb(slug: string): Promise<HerbDetail | null> {
   return data;
 }
 
+async function getHerbRecipes(herbId: string): Promise<HerbRecipe[]> {
+  if (!supabase) {
+    throw new Error("Supabase is not configured. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+  }
+
+  const { data, error } = await supabase
+    .from("herb_recipes")
+    .select(
+      "id, herb_id, title, preparation_type, ingredients, instructions, dosage_note, safety_note, created_at",
+    )
+    .eq("herb_id", herbId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as HerbRecipe[];
+}
+
 export default async function HerbDetailPage({
   params,
 }: {
@@ -53,6 +85,8 @@ export default async function HerbDetailPage({
   if (!herb) {
     notFound();
   }
+
+  const recipes = await getHerbRecipes(herb.id);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
@@ -114,6 +148,50 @@ export default async function HerbDetailPage({
             />
           </div>
 
+          <section className="mt-10">
+            <h2 className="text-2xl font-bold text-yellow-200">
+              Рецепти и начини на приготвяне
+            </h2>
+            <p className="mt-3 leading-7 text-emerald-100">
+              Тези описания са образователни и не са лечение. Винаги обръщайте внимание
+              на бележките за безопасност.
+            </p>
+
+            {recipes.length === 0 ? (
+              <p className="mt-5 rounded-2xl border border-emerald-700 bg-emerald-950/60 p-4 text-emerald-100">
+                Все още няма добавени рецепти за тази билка.
+              </p>
+            ) : (
+              <div className="mt-5 grid gap-5">
+                {recipes.map((recipe) => (
+                  <article
+                    key={recipe.id}
+                    className="rounded-3xl border border-emerald-800 bg-emerald-950/60 p-5 shadow-xl ring-1 ring-white/10"
+                  >
+                    <h3 className="text-xl font-bold text-yellow-200">
+                      {recipe.title ?? "Рецепта без заглавие"}
+                    </h3>
+                    {recipe.preparation_type ? (
+                      <p className="mt-2 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                        {recipe.preparation_type}
+                      </p>
+                    ) : null}
+                    <RecipeField title="Съставки" text={recipe.ingredients} />
+                    <RecipeField title="Инструкции" text={recipe.instructions} />
+                    <RecipeField title="Бележка за употреба" text={recipe.dosage_note} />
+                    <div className="mt-4 rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-4 text-yellow-50">
+                      <h4 className="font-bold text-yellow-100">Бележка за безопасност</h4>
+                      <p className="mt-2 leading-7">
+                        {recipe.safety_note ??
+                          "Няма добавена отделна бележка за безопасност. Използвайте информацията внимателно и се консултирайте със специалист при съмнения."}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+
           <div className="mt-10 rounded-2xl bg-yellow-100 p-5 text-yellow-950">
             <h2 className="font-bold">Важно предупреждение</h2>
             <p className="mt-2 leading-7">
@@ -125,6 +203,17 @@ export default async function HerbDetailPage({
         </article>
       </section>
     </main>
+  );
+}
+
+function RecipeField({ title, text }: { title: string; text: string | null }) {
+  return (
+    <section className="mt-4">
+      <h4 className="font-bold text-emerald-200">{title}</h4>
+      <p className="mt-2 whitespace-pre-line leading-7 text-green-50">
+        {text ?? "Няма добавена информация."}
+      </p>
+    </section>
   );
 }
 

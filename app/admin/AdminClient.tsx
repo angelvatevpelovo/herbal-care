@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminCategoryEditForm from "./AdminCategoryEditForm";
 import AdminCategoryForm from "./AdminCategoryForm";
@@ -79,6 +79,18 @@ type AdminHerbCategoryRelation = {
   category_id: string;
 };
 
+type AdminHerbRecipe = {
+  id: string;
+  herb_id: string;
+  title: string | null;
+  preparation_type: string | null;
+  ingredients: string | null;
+  instructions: string | null;
+  dosage_note: string | null;
+  safety_note: string | null;
+  created_at: string | null;
+};
+
 type AdminStats = {
   herbs: number | null;
   symptoms: number | null;
@@ -102,6 +114,16 @@ type HerbOverviewFilter =
   | "without_symptoms"
   | "without_categories"
   | "without_symptoms_and_categories";
+
+type RecipeFormValues = {
+  herb_id: string;
+  title: string;
+  preparation_type: string;
+  ingredients: string;
+  instructions: string;
+  dosage_note: string;
+  safety_note: string;
+};
 
 const adminCards: AdminCard[] = [
   {
@@ -137,6 +159,16 @@ const initialStats: AdminStats = {
   categories: null,
   feedback: null,
   aiHistory: null,
+};
+
+const initialRecipeFormValues: RecipeFormValues = {
+  herb_id: "",
+  title: "",
+  preparation_type: "",
+  ingredients: "",
+  instructions: "",
+  dosage_note: "",
+  safety_note: "",
 };
 
 const statCards = [
@@ -240,6 +272,10 @@ export default function AdminClient() {
   const [herbCategoryRelations, setHerbCategoryRelations] = useState<
     AdminHerbCategoryRelation[]
   >([]);
+  const [herbRecipes, setHerbRecipes] = useState<AdminHerbRecipe[]>([]);
+  const [recipeFormValues, setRecipeFormValues] =
+    useState<RecipeFormValues>(initialRecipeFormValues);
+  const [isRecipeSubmitting, setIsRecipeSubmitting] = useState(false);
   const [editingHerb, setEditingHerb] = useState<AdminHerb | null>(null);
   const [editingSymptom, setEditingSymptom] = useState<AdminSymptom | null>(null);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
@@ -345,6 +381,7 @@ export default function AdminClient() {
         { data: profilesData, error: profilesError },
         { data: herbSymptomRelationsData, error: herbSymptomRelationsError },
         { data: herbCategoryRelationsData, error: herbCategoryRelationsError },
+        { data: herbRecipesData, error: herbRecipesError },
       ] = await Promise.all([
         client
           .from("herbs")
@@ -377,6 +414,12 @@ export default function AdminClient() {
           .limit(50),
         client.from("herb_symptoms").select("herb_id, symptom_id"),
         client.from("herb_categories").select("herb_id, category_id"),
+        client
+          .from("herb_recipes")
+          .select(
+            "id, herb_id, title, preparation_type, ingredients, instructions, dosage_note, safety_note, created_at"
+          )
+          .order("created_at", { ascending: false }),
       ]);
 
       if (!isMounted) {
@@ -391,7 +434,8 @@ export default function AdminClient() {
         feedbackError ||
         profilesError ||
         herbSymptomRelationsError ||
-        herbCategoryRelationsError
+        herbCategoryRelationsError ||
+        herbRecipesError
       ) {
         setMessage("Не успяхме да заредим админ данните.");
       } else {
@@ -407,6 +451,7 @@ export default function AdminClient() {
         setHerbCategoryRelations(
           (herbCategoryRelationsData ?? []) as AdminHerbCategoryRelation[]
         );
+        setHerbRecipes((herbRecipesData ?? []) as AdminHerbRecipe[]);
       }
 
       setIsLoading(false);
@@ -529,6 +574,102 @@ export default function AdminClient() {
   const herbsWithoutAnyRelations = herbs
     .filter((herb) => !herbIdsWithSymptoms.has(herb.id) && !herbIdsWithCategories.has(herb.id))
     .slice(0, 8);
+  const herbNameById = new Map(herbs.map((herb) => [herb.id, herb.name]));
+
+  function updateRecipeFormValue(name: keyof RecipeFormValues, value: string) {
+    setRecipeFormValues((current) => ({ ...current, [name]: value }));
+  }
+
+  function optionalRecipeValue(value: string) {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  async function handleRecipeCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!supabase) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Supabase не е конфигуриран.",
+      });
+      return;
+    }
+
+    const herbId = recipeFormValues.herb_id;
+    const title = recipeFormValues.title.trim();
+
+    if (!herbId || !title) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Моля, изберете билка и въведете заглавие на рецептата.",
+      });
+      return;
+    }
+
+    setIsRecipeSubmitting(true);
+    setAdminActionMessage(null);
+
+    const { data, error } = await supabase
+      .from("herb_recipes")
+      .insert({
+        herb_id: herbId,
+        title,
+        preparation_type: optionalRecipeValue(recipeFormValues.preparation_type),
+        ingredients: optionalRecipeValue(recipeFormValues.ingredients),
+        instructions: optionalRecipeValue(recipeFormValues.instructions),
+        dosage_note: optionalRecipeValue(recipeFormValues.dosage_note),
+        safety_note: optionalRecipeValue(recipeFormValues.safety_note),
+      })
+      .select(
+        "id, herb_id, title, preparation_type, ingredients, instructions, dosage_note, safety_note, created_at"
+      )
+      .single();
+
+    setIsRecipeSubmitting(false);
+
+    if (error || !data) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при добавяне на рецептата.",
+      });
+      return;
+    }
+
+    setHerbRecipes((current) => [data as AdminHerbRecipe, ...current]);
+    setRecipeFormValues(initialRecipeFormValues);
+    setAdminActionMessage({
+      type: "success",
+      text: "Рецептата беше добавена успешно.",
+    });
+  }
+
+  async function handleRecipeDelete(recipe: AdminHerbRecipe) {
+    if (
+      !supabase ||
+      !window.confirm("Сигурни ли сте, че искате да изтриете тази рецепта?")
+    ) {
+      return;
+    }
+
+    setAdminActionMessage(null);
+
+    const { error } = await supabase.from("herb_recipes").delete().eq("id", recipe.id);
+
+    if (error) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при изтриване на рецептата.",
+      });
+      return;
+    }
+
+    setHerbRecipes((current) => current.filter((item) => item.id !== recipe.id));
+    setAdminActionMessage({
+      type: "success",
+      text: "Рецептата беше изтрита успешно.",
+    });
+  }
 
   function handleHerbCreated(herb: AdminHerb) {
     setHerbs((current) =>
@@ -643,6 +784,7 @@ export default function AdminClient() {
     setHerbCategoryRelations((current) =>
       current.filter((relation) => relation.herb_id !== herb.id)
     );
+    setHerbRecipes((current) => current.filter((recipe) => recipe.herb_id !== herb.id));
     setEditingHerb((current) => (current?.id === herb.id ? null : current));
     setStats((current) => ({
       ...current,
@@ -1031,6 +1173,164 @@ export default function AdminClient() {
         </div>
 
         <AdminHerbRelationsForm onSaved={handleHerbRelationsSaved} />
+      </section>
+
+      <section className="mt-10">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Рецепти
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">
+              Рецепти и начини на приготвяне
+            </h2>
+          </div>
+          <p className="text-sm text-emerald-200">
+            Добавяйте образователни описания без твърдения за лечение.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleRecipeCreate}
+          className="mt-5 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6"
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-emerald-100">Билка *</span>
+              <select
+                required
+                value={recipeFormValues.herb_id}
+                onChange={(event) => updateRecipeFormValue("herb_id", event.target.value)}
+                className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+              >
+                <option value="">Изберете билка</option>
+                {herbs.map((herb) => (
+                  <option key={herb.id} value={herb.id}>
+                    {herb.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold text-emerald-100">Заглавие *</span>
+              <input
+                required
+                type="text"
+                value={recipeFormValues.title}
+                onChange={(event) => updateRecipeFormValue("title", event.target.value)}
+                className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+              />
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="text-sm font-semibold text-emerald-100">Тип приготвяне</span>
+              <input
+                type="text"
+                value={recipeFormValues.preparation_type}
+                onChange={(event) =>
+                  updateRecipeFormValue("preparation_type", event.target.value)
+                }
+                className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {[
+              { name: "ingredients", label: "Съставки" },
+              { name: "instructions", label: "Инструкции" },
+              { name: "dosage_note", label: "Бележка за употреба" },
+              { name: "safety_note", label: "Бележка за безопасност" },
+            ].map((field) => (
+              <label key={field.name} className="block">
+                <span className="text-sm font-semibold text-emerald-100">{field.label}</span>
+                <textarea
+                  value={recipeFormValues[field.name as keyof RecipeFormValues]}
+                  onChange={(event) =>
+                    updateRecipeFormValue(
+                      field.name as keyof RecipeFormValues,
+                      event.target.value
+                    )
+                  }
+                  rows={4}
+                  className="mt-2 w-full resize-y rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm leading-6 text-yellow-50">
+            Използвайте внимателен език. Рецептите са образователни и не трябва да
+            обещават лечение или да заменят лекарска консултация.
+          </div>
+
+          <button
+            type="submit"
+            disabled={isRecipeSubmitting}
+            className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-yellow-300 px-5 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+          >
+            {isRecipeSubmitting ? "Добавяне..." : "Добави рецепта"}
+          </button>
+        </form>
+
+        <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
+          <div className="hidden grid-cols-[1.2fr_1.4fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+            <span>Билка</span>
+            <span>Заглавие</span>
+            <span>Тип</span>
+            <span className="text-right">Действия</span>
+          </div>
+
+          <div className="divide-y divide-emerald-800/70">
+            {herbRecipes.length === 0 ? (
+              <div className="p-5 text-emerald-100 sm:p-6">
+                Все още няма добавени рецепти.
+              </div>
+            ) : (
+              herbRecipes.map((recipe) => (
+                <article
+                  key={recipe.id}
+                  className="grid gap-3 px-5 py-4 md:grid-cols-[1.2fr_1.4fr_1fr_auto] md:items-center md:gap-4"
+                >
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Билка
+                    </p>
+                    <p className="font-semibold text-emerald-50">
+                      {herbNameById.get(recipe.herb_id) ?? "Непозната билка"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Заглавие
+                    </p>
+                    <p className="font-bold text-yellow-200">
+                      {recipe.title ?? "Рецепта без заглавие"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                      Тип
+                    </p>
+                    <p className="text-emerald-100">
+                      {recipe.preparation_type ?? "Не е посочен"}
+                    </p>
+                  </div>
+                  <div className="flex justify-start md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => void handleRecipeDelete(recipe)}
+                      className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                    >
+                      Изтрий
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="mt-10">
