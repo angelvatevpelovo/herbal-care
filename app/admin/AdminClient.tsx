@@ -279,6 +279,11 @@ export default function AdminClient() {
   const [recipeFormValues, setRecipeFormValues] =
     useState<RecipeFormValues>(initialRecipeFormValues);
   const [isRecipeSubmitting, setIsRecipeSubmitting] = useState(false);
+  const [recipeSearch, setRecipeSearch] = useState("");
+  const [editingRecipe, setEditingRecipe] = useState<AdminHerbRecipe | null>(null);
+  const [recipeEditValues, setRecipeEditValues] =
+    useState<RecipeFormValues>(initialRecipeFormValues);
+  const [isRecipeUpdating, setIsRecipeUpdating] = useState(false);
   const [editingHerb, setEditingHerb] = useState<AdminHerb | null>(null);
   const [editingSymptom, setEditingSymptom] = useState<AdminSymptom | null>(null);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
@@ -578,14 +583,53 @@ export default function AdminClient() {
     .filter((herb) => !herbIdsWithSymptoms.has(herb.id) && !herbIdsWithCategories.has(herb.id))
     .slice(0, 8);
   const herbNameById = new Map(herbs.map((herb) => [herb.id, herb.name]));
+  const normalizedRecipeSearch = recipeSearch.trim().toLowerCase();
+  const filteredHerbRecipes = herbRecipes.filter((recipe) => {
+    if (!normalizedRecipeSearch) {
+      return true;
+    }
+
+    return [
+      recipe.title ?? "",
+      recipe.preparation_type ?? "",
+      recipe.ingredients ?? "",
+      recipe.instructions ?? "",
+      recipe.dosage_note ?? "",
+      recipe.safety_note ?? "",
+      herbNameById.get(recipe.herb_id) ?? "",
+    ].some((value) => value.toLowerCase().includes(normalizedRecipeSearch));
+  });
 
   function updateRecipeFormValue(name: keyof RecipeFormValues, value: string) {
     setRecipeFormValues((current) => ({ ...current, [name]: value }));
   }
 
+  function updateRecipeEditValue(name: keyof RecipeFormValues, value: string) {
+    setRecipeEditValues((current) => ({ ...current, [name]: value }));
+  }
+
   function optionalRecipeValue(value: string) {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
+  }
+
+  function handleRecipeEditStart(recipe: AdminHerbRecipe) {
+    setEditingRecipe(recipe);
+    setRecipeEditValues({
+      herb_id: recipe.herb_id,
+      title: recipe.title ?? "",
+      preparation_type: recipe.preparation_type ?? "",
+      ingredients: recipe.ingredients ?? "",
+      instructions: recipe.instructions ?? "",
+      dosage_note: recipe.dosage_note ?? "",
+      safety_note: recipe.safety_note ?? "",
+    });
+    setAdminActionMessage(null);
+  }
+
+  function handleRecipeEditCancel() {
+    setEditingRecipe(null);
+    setRecipeEditValues(initialRecipeFormValues);
   }
 
   async function handleRecipeCreate(event: FormEvent<HTMLFormElement>) {
@@ -647,6 +691,68 @@ export default function AdminClient() {
     });
   }
 
+  async function handleRecipeUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!supabase || !editingRecipe) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Supabase не е конфигуриран.",
+      });
+      return;
+    }
+
+    const title = recipeEditValues.title.trim();
+
+    if (!title) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Моля, въведете заглавие на рецептата.",
+      });
+      return;
+    }
+
+    setIsRecipeUpdating(true);
+    setAdminActionMessage(null);
+
+    const { data, error } = await supabase
+      .from("herb_recipes")
+      .update({
+        title,
+        preparation_type: optionalRecipeValue(recipeEditValues.preparation_type),
+        ingredients: optionalRecipeValue(recipeEditValues.ingredients),
+        instructions: optionalRecipeValue(recipeEditValues.instructions),
+        dosage_note: optionalRecipeValue(recipeEditValues.dosage_note),
+        safety_note: optionalRecipeValue(recipeEditValues.safety_note),
+      })
+      .eq("id", editingRecipe.id)
+      .select(
+        "id, herb_id, title, preparation_type, ingredients, instructions, dosage_note, safety_note, created_at"
+      )
+      .single();
+
+    setIsRecipeUpdating(false);
+
+    if (error || !data) {
+      setAdminActionMessage({
+        type: "error",
+        text: "Възникна проблем при обновяване на рецептата.",
+      });
+      return;
+    }
+
+    const updatedRecipe = data as AdminHerbRecipe;
+    setHerbRecipes((current) =>
+      current.map((recipe) => (recipe.id === updatedRecipe.id ? updatedRecipe : recipe))
+    );
+    setEditingRecipe(null);
+    setRecipeEditValues(initialRecipeFormValues);
+    setAdminActionMessage({
+      type: "success",
+      text: "Рецептата беше обновена успешно.",
+    });
+  }
+
   async function handleRecipeDelete(recipe: AdminHerbRecipe) {
     if (
       !supabase ||
@@ -668,6 +774,7 @@ export default function AdminClient() {
     }
 
     setHerbRecipes((current) => current.filter((item) => item.id !== recipe.id));
+    setEditingRecipe((current) => (current?.id === recipe.id ? null : current));
     setAdminActionMessage({
       type: "success",
       text: "Рецептата беше изтрита успешно.",
@@ -1277,6 +1384,22 @@ export default function AdminClient() {
           </button>
         </form>
 
+        <div className="mt-5 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+          <label className="block">
+            <span className="text-sm font-semibold text-emerald-100">Търсене в рецепти</span>
+            <input
+              type="search"
+              value={recipeSearch}
+              onChange={(event) => setRecipeSearch(event.target.value)}
+              placeholder="Търси рецепта..."
+              className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+            />
+          </label>
+          <p className="mt-3 text-sm font-semibold text-emerald-100">
+            Показани рецепти: {filteredHerbRecipes.length}
+          </p>
+        </div>
+
         <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
           <div className="hidden grid-cols-[1.2fr_1.4fr_1fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
             <span>Билка</span>
@@ -1290,8 +1413,12 @@ export default function AdminClient() {
               <div className="p-5 text-emerald-100 sm:p-6">
                 Все още няма добавени рецепти.
               </div>
+            ) : filteredHerbRecipes.length === 0 ? (
+              <div className="p-5 text-emerald-100 sm:p-6">
+                Няма рецепти за избраното търсене.
+              </div>
             ) : (
-              herbRecipes.map((recipe) => (
+              filteredHerbRecipes.map((recipe) => (
                 <article
                   key={recipe.id}
                   className="grid gap-3 px-5 py-4 md:grid-cols-[1.2fr_1.4fr_1fr_auto] md:items-center md:gap-4"
@@ -1320,7 +1447,14 @@ export default function AdminClient() {
                       {recipe.preparation_type ?? "Не е посочен"}
                     </p>
                   </div>
-                  <div className="flex justify-start md:justify-end">
+                  <div className="flex flex-wrap justify-start gap-2 md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleRecipeEditStart(recipe)}
+                      className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-yellow-300/60 bg-yellow-300/10 px-4 py-2 text-sm font-bold text-yellow-100 transition hover:bg-yellow-300 hover:text-green-950"
+                    >
+                      Редактирай
+                    </button>
                     <button
                       type="button"
                       onClick={() => void handleRecipeDelete(recipe)}
@@ -1329,6 +1463,85 @@ export default function AdminClient() {
                       Изтрий
                     </button>
                   </div>
+                  {editingRecipe?.id === recipe.id ? (
+                    <form
+                      onSubmit={handleRecipeUpdate}
+                      className="rounded-2xl border border-yellow-300/30 bg-emerald-950/80 p-4 md:col-span-4"
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <label className="block">
+                          <span className="text-sm font-semibold text-emerald-100">
+                            Заглавие
+                          </span>
+                          <input
+                            required
+                            type="text"
+                            value={recipeEditValues.title}
+                            onChange={(event) =>
+                              updateRecipeEditValue("title", event.target.value)
+                            }
+                            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="text-sm font-semibold text-emerald-100">
+                            Тип приготвяне
+                          </span>
+                          <input
+                            type="text"
+                            value={recipeEditValues.preparation_type}
+                            onChange={(event) =>
+                              updateRecipeEditValue("preparation_type", event.target.value)
+                            }
+                            className="mt-2 min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        {[
+                          { name: "ingredients", label: "Съставки" },
+                          { name: "instructions", label: "Инструкции" },
+                          { name: "dosage_note", label: "Бележка за употреба" },
+                          { name: "safety_note", label: "Бележка за безопасност" },
+                        ].map((field) => (
+                          <label key={field.name} className="block">
+                            <span className="text-sm font-semibold text-emerald-100">
+                              {field.label}
+                            </span>
+                            <textarea
+                              value={recipeEditValues[field.name as keyof RecipeFormValues]}
+                              onChange={(event) =>
+                                updateRecipeEditValue(
+                                  field.name as keyof RecipeFormValues,
+                                  event.target.value
+                                )
+                              }
+                              rows={4}
+                              className="mt-2 w-full resize-y rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+                            />
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                        <button
+                          type="submit"
+                          disabled={isRecipeUpdating}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                          {isRecipeUpdating ? "Запазване..." : "Запази"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleRecipeEditCancel}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/60 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                        >
+                          Откажи
+                        </button>
+                      </div>
+                    </form>
+                  ) : null}
                 </article>
               ))
             )}
