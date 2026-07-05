@@ -16,6 +16,12 @@ type HerbResult = {
   latin: string | null;
   emoji: string | null;
   short_description: string | null;
+  description: string | null;
+  traditional_uses: string | null;
+  preparation: string | null;
+  precautions: string | null;
+  interactions: string | null;
+  when_to_see_doctor: string | null;
 };
 
 type SymptomResult = {
@@ -24,9 +30,36 @@ type SymptomResult = {
   description: string | null;
 };
 
+type CategoryResult = {
+  slug: string;
+  name: string;
+  description: string | null;
+};
+
+type RecipeHerb = {
+  name: string;
+  slug: string;
+};
+
+type RecipeResult = {
+  id: string;
+  title: string | null;
+  preparation_type: string | null;
+  ingredients: string | null;
+  instructions: string | null;
+  dosage_note: string | null;
+  safety_note: string | null;
+  herbs: RecipeHerb | RecipeHerb[] | null;
+};
+
 async function searchData(query: string) {
   if (!query.trim()) {
-    return { herbs: [] as HerbResult[], symptoms: [] as SymptomResult[] };
+    return {
+      herbs: [] as HerbResult[],
+      symptoms: [] as SymptomResult[],
+      categories: [] as CategoryResult[],
+      recipes: [] as RecipeResult[],
+    };
   }
 
   if (!supabase) {
@@ -36,18 +69,39 @@ async function searchData(query: string) {
   const escapedQuery = query.replaceAll("%", "\\%").replaceAll("_", "\\_");
   const pattern = `%${escapedQuery}%`;
 
-  const [{ data: herbs, error: herbsError }, { data: symptoms, error: symptomsError }] =
+  const [
+    { data: herbs, error: herbsError },
+    { data: symptoms, error: symptomsError },
+    { data: categories, error: categoriesError },
+    { data: recipes, error: recipesError },
+  ] =
     await Promise.all([
       supabase
         .from("herbs")
-        .select("slug, name, latin, emoji, short_description")
-        .or(`name.ilike.${pattern},latin.ilike.${pattern},short_description.ilike.${pattern}`)
+        .select(
+          "slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
+        )
+        .or(
+          `name.ilike.${pattern},slug.ilike.${pattern},short_description.ilike.${pattern},description.ilike.${pattern},traditional_uses.ilike.${pattern},preparation.ilike.${pattern},precautions.ilike.${pattern},interactions.ilike.${pattern},when_to_see_doctor.ilike.${pattern}`,
+        )
         .order("name", { ascending: true }),
       supabase
         .from("symptoms")
         .select("slug, name, description")
-        .or(`name.ilike.${pattern},description.ilike.${pattern}`)
+        .or(`name.ilike.${pattern},slug.ilike.${pattern},description.ilike.${pattern}`)
         .order("name", { ascending: true }),
+      supabase
+        .from("categories")
+        .select("slug, name, description")
+        .or(`name.ilike.${pattern},slug.ilike.${pattern},description.ilike.${pattern}`)
+        .order("name", { ascending: true }),
+      supabase
+        .from("herb_recipes")
+        .select("id, title, preparation_type, ingredients, instructions, dosage_note, safety_note, herbs(name, slug)")
+        .or(
+          `title.ilike.${pattern},preparation_type.ilike.${pattern},ingredients.ilike.${pattern},instructions.ilike.${pattern},dosage_note.ilike.${pattern},safety_note.ilike.${pattern}`,
+        )
+        .order("created_at", { ascending: false }),
     ]);
 
   if (herbsError) {
@@ -58,18 +112,37 @@ async function searchData(query: string) {
     throw new Error(symptomsError.message);
   }
 
+  if (categoriesError) {
+    throw new Error(categoriesError.message);
+  }
+
+  if (recipesError) {
+    throw new Error(recipesError.message);
+  }
+
   return {
     herbs: (herbs ?? []) as HerbResult[],
     symptoms: (symptoms ?? []) as SymptomResult[],
+    categories: (categories ?? []) as CategoryResult[],
+    recipes: (recipes ?? []) as RecipeResult[],
   };
+}
+
+function getRecipeHerb(recipe: RecipeResult) {
+  if (Array.isArray(recipe.herbs)) {
+    return recipe.herbs[0] ?? null;
+  }
+
+  return recipe.herbs;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
-  const { herbs, symptoms } = await searchData(query);
+  const { herbs, symptoms, categories, recipes } = await searchData(query);
   const hasSearched = query.length > 0;
-  const hasResults = herbs.length > 0 || symptoms.length > 0;
+  const hasResults =
+    herbs.length > 0 || symptoms.length > 0 || categories.length > 0 || recipes.length > 0;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 px-4 py-6 text-white sm:px-6 sm:py-8">
@@ -84,7 +157,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             Търсене
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">
-            Потърсете билка, латинско име, симптом или кратко описание. Резултатите
+            Потърсете билка, симптом, категория или начин на приготвяне. Резултатите
             са за ориентация и подготовка за информиран разговор със специалист.
           </p>
         </header>
@@ -112,7 +185,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         </form>
 
         <div className="mt-8 rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50">
-          Търсенето предоставя образователна информация и не замества консултация с лекар.
+          Информацията е образователна и не замества лекарска консултация.
         </div>
 
         {hasSearched ? (
@@ -122,6 +195,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </h2>
 
             {hasResults ? (
+              <>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <ResultCounter label="Билки" count={herbs.length} />
+                  <ResultCounter label="Симптоми" count={symptoms.length} />
+                  <ResultCounter label="Категории" count={categories.length} />
+                  <ResultCounter label="Рецепти" count={recipes.length} />
+                </div>
+
               <div className="mt-5 grid gap-5 lg:grid-cols-2">
                 <ResultGroup title="Билки">
                   {herbs.length > 0 ? (
@@ -173,16 +254,78 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     <EmptyState text="Няма намерени симптоми." />
                   )}
                 </ResultGroup>
+
+                <ResultGroup title="Категории">
+                  {categories.length > 0 ? (
+                    categories.map((category) => (
+                      <Link
+                        key={category.slug}
+                        href={`/categories/${category.slug}`}
+                        className="block rounded-2xl border border-emerald-800/70 bg-emerald-950/70 p-5 shadow-xl shadow-black/20 transition hover:border-yellow-300"
+                      >
+                        <h3 className="text-xl font-bold text-emerald-50">{category.name}</h3>
+                        <p className="mt-3 leading-7 text-emerald-100">
+                          {category.description ?? "Няма добавено описание."}
+                        </p>
+                        <p className="mt-4 text-sm font-semibold text-yellow-200">
+                          Виж категорията
+                        </p>
+                      </Link>
+                    ))
+                  ) : (
+                    <EmptyState text="Няма намерени категории." />
+                  )}
+                </ResultGroup>
+
+                <ResultGroup title="Рецепти">
+                  {recipes.length > 0 ? (
+                    recipes.map((recipe) => {
+                      const herb = getRecipeHerb(recipe);
+
+                      return (
+                        <Link
+                          key={recipe.id}
+                          href="/recipes"
+                          className="block rounded-2xl border border-emerald-800/70 bg-emerald-950/70 p-5 shadow-xl shadow-black/20 transition hover:border-yellow-300"
+                        >
+                          <h3 className="text-xl font-bold text-emerald-50">
+                            {recipe.title ?? "Рецепта без заглавие"}
+                          </h3>
+                          <p className="mt-2 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300">
+                            {recipe.preparation_type ?? "Начин на приготвяне"}
+                          </p>
+                          {herb ? (
+                            <p className="mt-3 text-emerald-100">Билка: {herb.name}</p>
+                          ) : null}
+                          <p className="mt-4 text-sm font-semibold text-yellow-200">
+                            Виж рецепти
+                          </p>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    <EmptyState text="Няма намерени рецепти." />
+                  )}
+                </ResultGroup>
               </div>
+              </>
             ) : (
               <div className="mt-5 rounded-2xl border border-emerald-800 bg-emerald-950/70 p-5 text-emerald-100">
-                Няма резултати. Опитайте с друго име на билка, симптом или по-кратка дума.
+                Няма намерени резултати. Опитайте с име на билка, симптом или начин на приготвяне.
               </div>
             )}
           </section>
         ) : null}
       </section>
     </main>
+  );
+}
+
+function ResultCounter({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="rounded-2xl border border-emerald-800 bg-emerald-950/70 p-4 text-emerald-100">
+      <span className="font-bold text-yellow-200">{label}:</span> {count}
+    </div>
   );
 }
 
