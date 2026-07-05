@@ -229,6 +229,8 @@ export default function AdminClient() {
   const [editingSymptom, setEditingSymptom] = useState<AdminSymptom | null>(null);
   const [editingCategory, setEditingCategory] = useState<AdminCategory | null>(null);
   const [herbOverviewFilter, setHerbOverviewFilter] = useState<HerbOverviewFilter>("all");
+  const [symptomSearch, setSymptomSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const [showOnlyEmergencyAi, setShowOnlyEmergencyAi] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [adminActionMessage, setAdminActionMessage] = useState<{
@@ -485,6 +487,26 @@ export default function AdminClient() {
     }
 
     return true;
+  });
+  const normalizedSymptomSearch = symptomSearch.trim().toLowerCase();
+  const filteredSymptoms = symptoms.filter((symptom) => {
+    if (!normalizedSymptomSearch) {
+      return true;
+    }
+
+    return [symptom.name, symptom.slug, symptom.description ?? ""].some((value) =>
+      value.toLowerCase().includes(normalizedSymptomSearch)
+    );
+  });
+  const normalizedCategorySearch = categorySearch.trim().toLowerCase();
+  const filteredCategories = categories.filter((category) => {
+    if (!normalizedCategorySearch) {
+      return true;
+    }
+
+    return [category.name, category.slug, category.description ?? ""].some((value) =>
+      value.toLowerCase().includes(normalizedCategorySearch)
+    );
   });
 
   function handleHerbCreated(herb: AdminHerb) {
@@ -1247,6 +1269,19 @@ export default function AdminClient() {
               />
             ) : null}
 
+            <div className="mt-5 rounded-3xl border border-emerald-800 bg-emerald-950/50 p-4">
+              <input
+                type="search"
+                value={symptomSearch}
+                onChange={(event) => setSymptomSearch(event.target.value)}
+                placeholder="Търси симптом..."
+                className="min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+              />
+              <p className="mt-3 text-sm font-semibold text-emerald-100">
+                Показани симптоми: {filteredSymptoms.length}
+              </p>
+            </div>
+
             <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
               <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
                 <span>Име</span>
@@ -1256,49 +1291,55 @@ export default function AdminClient() {
               </div>
 
               <div className="divide-y divide-emerald-800/70">
-                {symptoms.map((symptom) => (
-                  <article
-                    key={symptom.id}
-                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
-                  >
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Име
-                      </p>
-                      <p className="font-bold text-yellow-200">{symptom.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Slug
-                      </p>
-                      <p className="break-words font-mono text-sm text-emerald-50">{symptom.slug}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Описание
-                      </p>
-                      <p className="leading-7 text-emerald-100">
-                        {symptom.description || "Няма добавено описание."}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setEditingSymptom(symptom)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
-                      >
-                        Редактирай
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleSymptomDelete(symptom)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
-                      >
-                        Изтрий
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {filteredSymptoms.length === 0 ? (
+                  <div className="p-5 text-emerald-100 sm:p-6">
+                    Няма симптоми за избраното търсене.
+                  </div>
+                ) : (
+                  filteredSymptoms.map((symptom) => (
+                    <article
+                      key={symptom.id}
+                      className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Име
+                        </p>
+                        <p className="font-bold text-yellow-200">{symptom.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Slug
+                        </p>
+                        <p className="break-words font-mono text-sm text-emerald-50">{symptom.slug}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Описание
+                        </p>
+                        <p className="leading-7 text-emerald-100">
+                          {symptom.description || "Няма добавено описание."}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setEditingSymptom(symptom)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                        >
+                          Редактирай
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleSymptomDelete(symptom)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                        >
+                          Изтрий
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
               </div>
             </div>
           </>
@@ -1330,6 +1371,19 @@ export default function AdminClient() {
               />
             ) : null}
 
+            <div className="mt-5 rounded-3xl border border-emerald-800 bg-emerald-950/50 p-4">
+              <input
+                type="search"
+                value={categorySearch}
+                onChange={(event) => setCategorySearch(event.target.value)}
+                placeholder="Търси категория..."
+                className="min-h-12 w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-emerald-50 outline-none transition placeholder:text-emerald-300/70 focus:border-yellow-300 focus:ring-2 focus:ring-yellow-300/30"
+              />
+              <p className="mt-3 text-sm font-semibold text-emerald-100">
+                Показани категории: {filteredCategories.length}
+              </p>
+            </div>
+
             <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
               <div className="hidden grid-cols-[1fr_1fr_2fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
                 <span>Име</span>
@@ -1339,55 +1393,61 @@ export default function AdminClient() {
               </div>
 
               <div className="divide-y divide-emerald-800/70">
-                {categories.map((category) => (
-                  <article
-                    key={category.id}
-                    className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
-                  >
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Име
-                      </p>
-                      <p className="font-bold text-yellow-200">{category.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Slug
-                      </p>
-                      <p className="break-words font-mono text-sm text-emerald-50">{category.slug}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
-                        Описание
-                      </p>
-                      <p className="leading-7 text-emerald-100">
-                        {category.description || "Няма добавено описание."}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
-                      <Link
-                        href={`/categories/${category.slug}`}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
-                      >
-                        Виж
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => setEditingCategory(category)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
-                      >
-                        Редактирай
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleCategoryDelete(category)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
-                      >
-                        Изтрий
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {filteredCategories.length === 0 ? (
+                  <div className="p-5 text-emerald-100 sm:p-6">
+                    Няма категории за избраното търсене.
+                  </div>
+                ) : (
+                  filteredCategories.map((category) => (
+                    <article
+                      key={category.id}
+                      className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_2fr_auto] md:items-start md:gap-4"
+                    >
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Име
+                        </p>
+                        <p className="font-bold text-yellow-200">{category.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Slug
+                        </p>
+                        <p className="break-words font-mono text-sm text-emerald-50">{category.slug}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                          Описание
+                        </p>
+                        <p className="leading-7 text-emerald-100">
+                          {category.description || "Няма добавено описание."}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row md:justify-end">
+                        <Link
+                          href={`/categories/${category.slug}`}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-900/70 px-4 py-2 text-sm font-bold text-emerald-50 transition hover:border-yellow-300 hover:text-yellow-100"
+                        >
+                          Виж
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setEditingCategory(category)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-yellow-300 px-4 py-2 text-sm font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                        >
+                          Редактирай
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCategoryDelete(category)}
+                          className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-300/50 bg-red-950/70 px-4 py-2 text-sm font-bold text-red-50 transition hover:border-red-200 hover:bg-red-900/80"
+                        >
+                          Изтрий
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                )}
               </div>
             </div>
           </>
