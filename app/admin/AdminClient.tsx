@@ -740,6 +740,38 @@ export default function AdminClient() {
         </div>
       </section>
 
+      <section className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Бърз преглед
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">Admin статус</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-emerald-100">
+            Компактен статус на основното съдържание, изчислен от вече заредените данни.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            { label: "Билки", value: herbs.length },
+            { label: "Симптоми", value: symptoms.length },
+            { label: "Категории", value: categories.length },
+            { label: "Непълни билки", value: incompleteHerbsCount },
+            { label: "Билки без връзки", value: herbsWithoutRelationsCount },
+          ].map((item) => (
+            <article
+              key={item.label}
+              className="rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4"
+            >
+              <p className="text-sm font-semibold text-emerald-200">{item.label}:</p>
+              <p className="mt-2 text-3xl font-bold text-yellow-200">{item.value}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {adminCards.map((card) => (
           <Link
