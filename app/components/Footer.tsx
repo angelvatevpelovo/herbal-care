@@ -12,6 +12,7 @@ const footerLinks = [
   { href: "/admin", label: "Админ" },
   { href: "/about", label: "За Herbal Care" },
   { href: "/contact", label: "Контакт" },
+  { href: "/sources", label: "Източници" },
   { href: "/privacy", label: "Политика за поверителност" },
   { href: "/terms", label: "Условия за ползване" },
 ];
