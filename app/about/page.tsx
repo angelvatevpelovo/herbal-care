@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Header from "@/app/components/Header";
 
 const doctorExamples = [
@@ -9,6 +10,21 @@ const doctorExamples = [
   "висока температура при дете",
   "симптоми, които се влошават или не отминават",
 ];
+
+const foundHereItems = [
+  "информация за билки",
+  "връзки между билки и симптоми",
+  "категории по теми",
+  "предпазни мерки",
+  "AI помощник с образователна насоченост",
+] as const;
+
+const doesNotDoItems = [
+  "не поставя диагнози",
+  "не назначава лечение",
+  "не заменя лекар",
+  "не гарантира резултати",
+] as const;
 
 export default function AboutPage() {
   return (
@@ -24,11 +40,32 @@ export default function AboutPage() {
             За Herbal Care
           </h1>
           <p className="mt-5 text-lg leading-8 text-emerald-100">
-            Herbal Care е образователен проект за билки, симптоми, природна грижа и
-            внимателна AI помощ. Целта е да представя информация на разбираем език,
-            да насочва към предпазни мерки и да помага на хората да подготвят
-            по-добри въпроси за лекар, фармацевт или друг медицински специалист.
+            Herbal Care е образователен проект за билки, традиционна употреба, симптоми
+            и безопасност. Целта е да представя информация на разбираем език, да
+            насочва към предпазни мерки и да помага на хората да подготвят по-добри
+            въпроси за лекар, фармацевт или друг медицински специалист.
           </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/herbs"
+              className="min-h-12 rounded-2xl bg-yellow-300 px-6 py-4 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+            >
+              Разгледай билките
+            </Link>
+            <Link
+              href="/symptoms"
+              className="min-h-12 rounded-2xl border border-emerald-300/60 bg-emerald-800/70 px-6 py-4 text-center font-bold text-emerald-50 transition hover:bg-emerald-700"
+            >
+              Потърси по симптом
+            </Link>
+            <Link
+              href="/contact"
+              className="min-h-12 rounded-2xl border border-yellow-300/70 bg-green-950 px-6 py-4 text-center font-bold text-yellow-100 shadow-lg transition hover:bg-green-900"
+            >
+              Свържи се с нас
+            </Link>
+          </div>
         </header>
 
         <section className="mt-8 rounded-3xl border border-red-300/40 bg-red-950/40 p-5 text-red-50 shadow-xl shadow-black/20 sm:p-6">
@@ -39,30 +76,56 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section className="mt-8 grid gap-5 md:grid-cols-3">
+        <section className="mt-8 grid gap-5 lg:grid-cols-2">
           <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
-            <h2 className="text-xl font-bold text-yellow-200">Билки</h2>
-            <p className="mt-3 leading-7 text-emerald-50">
-              Информация за традиционна употреба, предпазни мерки и възможни
-              взаимодействия.
-            </p>
+            <h2 className="text-2xl font-bold text-yellow-200">Какво ще намерите тук</h2>
+            <ul className="mt-5 grid gap-3">
+              {foundHereItems.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-2xl border border-emerald-800 bg-emerald-950/50 px-4 py-3 text-emerald-50"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
           </article>
 
           <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
-            <h2 className="text-xl font-bold text-yellow-200">Симптоми</h2>
-            <p className="mt-3 leading-7 text-emerald-50">
-              Образователни връзки между симптоми и билки, които може да се свързват с
-              традиционна употреба.
-            </p>
+            <h2 className="text-2xl font-bold text-yellow-200">Какво Herbal Care не прави</h2>
+            <ul className="mt-5 grid gap-3">
+              {doesNotDoItems.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 px-4 py-3 text-yellow-50"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
           </article>
+        </section>
 
-          <article className="rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
-            <h2 className="text-xl font-bold text-yellow-200">AI помощ</h2>
-            <p className="mt-3 leading-7 text-emerald-50">
-              Внимателна помощ за обяснение на информация, без диагнози, предписания
-              или обещания за лечение.
+        <section className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+            Внимателен подход
+          </p>
+          <h2 className="mt-2 text-2xl font-bold text-yellow-200">
+            Безопасността е на първо място
+          </h2>
+          <div className="mt-4 grid gap-4 text-emerald-50 md:grid-cols-2">
+            <p className="leading-7">
+              Билките могат да имат взаимодействия с лекарства, противопоказания и
+              различен ефект при различни хора. Дори традиционно използвани растения
+              може да не са подходящи при определени състояния, алергии или прием на
+              медикаменти.
             </p>
-          </article>
+            <p className="leading-7">
+              Herbal Care насърчава внимателно четене, проверка на предпазните мерки и
+              консултация със специалист, особено при бременност, деца, хронични
+              заболявания или тревожни симптоми.
+            </p>
+          </div>
         </section>
 
         <section className="mt-8 rounded-3xl border border-yellow-300/40 bg-yellow-300/10 p-5 text-yellow-50 sm:p-6">
