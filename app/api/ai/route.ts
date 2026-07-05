@@ -16,16 +16,49 @@ type Herb = {
   id: string;
   slug: string;
   name: string;
+  latin: string | null;
+  short_description: string | null;
+  description: string | null;
+  traditional_uses: string | null;
+  preparation: string | null;
+  precautions: string | null;
+  interactions: string | null;
+  when_to_see_doctor: string | null;
 };
 
 type Symptom = {
   id: string;
+  slug: string;
   name: string;
+  description: string | null;
+};
+
+type Category = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
 };
 
 type HerbSymptom = {
   herb_id: string;
   symptom_id: string;
+};
+
+type HerbCategory = {
+  herb_id: string;
+  category_id: string;
+};
+
+type HerbRecipe = {
+  id: string;
+  herb_id: string;
+  title: string | null;
+  preparation_type: string | null;
+  ingredients: string | null;
+  instructions: string | null;
+  dosage_note: string | null;
+  safety_note: string | null;
 };
 
 type RelatedLink = {
@@ -69,17 +102,103 @@ function uniqueLinks(links: RelatedLink[]) {
   });
 }
 
+const stopWords = new Set([
+  "какво",
+  "как",
+  "може",
+  "мога",
+  "при",
+  "за",
+  "със",
+  "след",
+  "преди",
+  "има",
+  "имам",
+  "въпрос",
+  "билка",
+  "билки",
+  "симптом",
+  "симптоми",
+  "здраве",
+  "общ",
+  "общо",
+  "дали",
+  "кои",
+  "кое",
+  "какви",
+  "да",
+  "ли",
+  "се",
+  "ме",
+  "ми",
+  "на",
+  "от",
+  "или",
+  "ако",
+]);
+
+function getSearchTerms(message: string) {
+  return normalizeText(message)
+    .split(/[\s,.;:!?()[\]{}"']+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 3 && !stopWords.has(term));
+}
+
+function searchableText(fields: Array<string | null | undefined>) {
+  return normalizeText(fields.filter(Boolean).join(" "));
+}
+
+function matchesSearch(fields: Array<string | null | undefined>, message: string, terms: string[]) {
+  const normalizedMessage = normalizeText(message);
+  const haystack = searchableText(fields);
+
+  if (!haystack) {
+    return false;
+  }
+
+  const exactFieldMatch = fields.some((field) => {
+    if (!field) {
+      return false;
+    }
+
+    const normalizedField = normalizeText(field);
+    return normalizedMessage.includes(normalizedField) || normalizedField.includes(normalizedMessage);
+  });
+
+  return exactFieldMatch || terms.some((term) => haystack.includes(term));
+}
+
+function shortenText(text: string | null | undefined, fallback: string) {
+  const value = text?.trim() || fallback;
+  return value.length > 180 ? `${value.slice(0, 177).trim()}...` : value;
+}
+
 async function fetchSupabaseContext() {
   if (!supabase) {
     throw new Error("Supabase is not configured.");
   }
 
-  const [{ data: herbs, error: herbsError }, { data: symptoms, error: symptomsError }, { data: herbSymptoms, error: herbSymptomsError }] =
-    await Promise.all([
-      supabase.from("herbs").select("id, slug, name"),
-      supabase.from("symptoms").select("id, name"),
-      supabase.from("herb_symptoms").select("herb_id, symptom_id"),
-    ]);
+  const [
+    { data: herbs, error: herbsError },
+    { data: symptoms, error: symptomsError },
+    { data: categories, error: categoriesError },
+    { data: herbSymptoms, error: herbSymptomsError },
+    { data: herbCategories, error: herbCategoriesError },
+    { data: herbRecipes },
+  ] = await Promise.all([
+    supabase
+      .from("herbs")
+      .select(
+        "id, slug, name, latin, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
+      ),
+    supabase.from("symptoms").select("id, slug, name, description"),
+    supabase.from("categories").select("id, slug, name, description"),
+    supabase.from("herb_symptoms").select("herb_id, symptom_id"),
+    supabase.from("herb_categories").select("herb_id, category_id"),
+    supabase
+      .from("herb_recipes")
+      .select("id, herb_id, title, preparation_type, ingredients, instructions, dosage_note, safety_note"),
+  ]);
 
   if (herbsError) {
     throw new Error(herbsError.message);
@@ -89,45 +208,136 @@ async function fetchSupabaseContext() {
     throw new Error(symptomsError.message);
   }
 
+  if (categoriesError) {
+    throw new Error(categoriesError.message);
+  }
+
   if (herbSymptomsError) {
     throw new Error(herbSymptomsError.message);
+  }
+
+  if (herbCategoriesError) {
+    throw new Error(herbCategoriesError.message);
   }
 
   return {
     herbs: (herbs ?? []) as Herb[],
     symptoms: (symptoms ?? []) as Symptom[],
+    categories: (categories ?? []) as Category[],
     herbSymptoms: (herbSymptoms ?? []) as HerbSymptom[],
+    herbCategories: (herbCategories ?? []) as HerbCategory[],
+    herbRecipes: (herbRecipes ?? []) as HerbRecipe[],
   };
 }
 
-function findRelatedLinks(message: string, herbs: Herb[], symptoms: Symptom[], herbSymptoms: HerbSymptom[]) {
-  const normalized = normalizeText(message);
-  const links: RelatedLink[] = [];
-
-  const matchedHerbs = herbs.filter((herb) => normalized.includes(normalizeText(herb.name)));
-  links.push(...matchedHerbs.map((herb) => ({ label: herb.name, href: `/herbs/${herb.slug}` })));
-
-  const matchedSymptoms = symptoms.filter((symptom) => normalized.includes(normalizeText(symptom.name)));
-  const matchedSymptomIds = new Set(matchedSymptoms.map((symptom) => symptom.id));
-  const relatedHerbIds = new Set(
-    herbSymptoms
-      .filter((connection) => matchedSymptomIds.has(connection.symptom_id))
-      .map((connection) => connection.herb_id),
+function findMatches(
+  message: string,
+  herbs: Herb[],
+  symptoms: Symptom[],
+  categories: Category[],
+  herbSymptoms: HerbSymptom[],
+  herbCategories: HerbCategory[],
+  herbRecipes: HerbRecipe[],
+) {
+  const terms = getSearchTerms(message);
+  const matchedHerbs = herbs.filter((herb) =>
+    matchesSearch(
+      [
+        herb.name,
+        herb.slug,
+        herb.short_description,
+        herb.description,
+        herb.traditional_uses,
+        herb.preparation,
+        herb.precautions,
+        herb.interactions,
+        herb.when_to_see_doctor,
+      ],
+      message,
+      terms,
+    ),
   );
 
-  const symptomHerbs = herbs.filter((herb) => relatedHerbIds.has(herb.id));
-  links.push(...symptomHerbs.map((herb) => ({ label: herb.name, href: `/herbs/${herb.slug}` })));
+  const matchedSymptoms = symptoms.filter((symptom) =>
+    matchesSearch([symptom.name, symptom.slug, symptom.description], message, terms),
+  );
+  const matchedCategories = categories.filter((category) =>
+    matchesSearch([category.name, category.slug, category.description], message, terms),
+  );
+  const matchedRecipes = herbRecipes.filter((recipe) =>
+    matchesSearch(
+      [recipe.title, recipe.preparation_type, recipe.ingredients, recipe.instructions, recipe.dosage_note, recipe.safety_note],
+      message,
+      terms,
+    ),
+  );
 
-  return uniqueLinks(links);
+  const relatedHerbIds = new Set(matchedHerbs.map((herb) => herb.id));
+  const matchedSymptomIds = new Set(matchedSymptoms.map((symptom) => symptom.id));
+  const matchedCategoryIds = new Set(matchedCategories.map((category) => category.id));
+
+  herbSymptoms
+    .filter((connection) => matchedSymptomIds.has(connection.symptom_id))
+    .forEach((connection) => relatedHerbIds.add(connection.herb_id));
+
+  herbCategories
+    .filter((connection) => matchedCategoryIds.has(connection.category_id))
+    .forEach((connection) => relatedHerbIds.add(connection.herb_id));
+
+  matchedRecipes.forEach((recipe) => relatedHerbIds.add(recipe.herb_id));
+
+  const suggestedHerbs = herbs.filter((herb) => relatedHerbIds.has(herb.id)).slice(0, 6);
+  const recipeHerbIds = new Set(herbRecipes.map((recipe) => recipe.herb_id));
+
+  return {
+    matchedHerbs,
+    matchedSymptoms,
+    matchedCategories,
+    matchedRecipes,
+    suggestedHerbs,
+    recipeHerbIds,
+  };
 }
 
-function buildAnswer(relatedLinks: RelatedLink[]) {
-  const relatedText =
-    relatedLinks.length > 0
-      ? ` Открих свързана информация за: ${relatedLinks.map((link) => link.label).join(", ")}.`
-      : " Не открих директно съвпадение по име на билка или симптом, но може да разгледате секциите Билки и Симптоми.";
+function buildAnswer(matches: ReturnType<typeof findMatches>) {
+  const hasAnyMatch =
+    matches.matchedHerbs.length > 0 ||
+    matches.matchedSymptoms.length > 0 ||
+    matches.matchedCategories.length > 0 ||
+    matches.matchedRecipes.length > 0;
 
-  return `Разбирам въпроса Ви. Това не е диагноза и не е лечение.${relatedText} Информацията е образователна и описва теми, които може да се свързват с традиционна употреба. При силни, внезапни или продължителни симптоми потърсете лекар.`;
+  if (!hasAnyMatch) {
+    return "Не открих точни съвпадения в базата. Можете да опитате с друг симптом или име на билка.";
+  }
+
+  const topicLabels = [
+    ...matches.matchedSymptoms.map((symptom) => `симптом: ${symptom.name}`),
+    ...matches.matchedCategories.map((category) => `категория: ${category.name}`),
+    ...matches.matchedHerbs.map((herb) => `билка: ${herb.name}`),
+    ...matches.matchedRecipes.map((recipe) => (recipe.title ? `рецепта: ${recipe.title}` : "рецепта")),
+  ].slice(0, 5);
+
+  const suggestedText =
+    matches.suggestedHerbs.length > 0
+      ? matches.suggestedHerbs
+          .map((herb) => {
+            const latinName = herb.latin ? ` (${herb.latin})` : "";
+            const recipeNote = matches.recipeHerbIds.has(herb.id)
+              ? " Има добавени рецепти/начини на приготвяне в страницата на билката."
+              : "";
+            const explanation = shortenText(
+              herb.short_description || herb.traditional_uses || herb.description,
+              "може да се разгледа като част от образователната база на Herbal Care.",
+            );
+
+            return `${herb.name}${latinName}: ${explanation} Връзка: /herbs/${herb.slug}.${recipeNote}`;
+          })
+          .join(" ")
+      : "Открих тема в базата, но към нея все още няма свързани билки за показване.";
+
+  const topicText = topicLabels.length > 0 ? `Открита тема: ${topicLabels.join(", ")}. ` : "";
+
+  return `Кратко напомняне: информацията е образователна, не е диагноза и не замества лекарска консултация. ${topicText}Може да се разгледат следните записи от базата: ${suggestedText} Формулировките са предпазливи: традиционно се използва, може да подпомогне при някои хора, но не е лечение. При силни, внезапни, тревожни или продължителни симптоми потърсете лекар.`;
 }
 
 function getBearerToken(request: Request) {
@@ -226,10 +436,11 @@ export async function POST(request: Request) {
     return NextResponse.json(payload);
   }
 
-  const { herbs, symptoms, herbSymptoms } = await fetchSupabaseContext();
-  const relatedLinks = findRelatedLinks(message, herbs, symptoms, herbSymptoms);
+  const { herbs, symptoms, categories, herbSymptoms, herbCategories, herbRecipes } = await fetchSupabaseContext();
+  const matches = findMatches(message, herbs, symptoms, categories, herbSymptoms, herbCategories, herbRecipes);
+  const relatedLinks = uniqueLinks(matches.suggestedHerbs.map((herb) => ({ label: herb.name, href: `/herbs/${herb.slug}` })));
   const payload = {
-    answer: buildAnswer(relatedLinks),
+    answer: buildAnswer(matches),
     isEmergency: false,
     relatedLinks,
   };
