@@ -18,16 +18,24 @@ export default function Header() {
   return (
     <header className="rounded-2xl border border-emerald-800/70 bg-emerald-950/85 p-3 shadow-xl shadow-black/20 sm:rounded-3xl sm:p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <Link href="/" className="flex min-w-fit items-center gap-3">
-          <img
-            src="/herbal-care-icon.svg"
-            alt=""
-            className="h-12 w-12 rounded-2xl border border-emerald-700 bg-emerald-900/60 p-1"
+        <Link
+          href="/"
+          className="group flex min-w-fit items-center gap-3 rounded-2xl px-1 py-1 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-offset-2 focus:ring-offset-emerald-950"
+        >
+          <span
+            className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/60 bg-gradient-to-br from-emerald-700 to-green-950 shadow-lg shadow-black/20 transition group-hover:border-yellow-300"
             aria-hidden="true"
-          />
-          <span>
-            <span className="block text-xl font-bold text-yellow-200">Herbal Care</span>
-            <span className="block text-sm text-emerald-200">Образователна билкова грижа</span>
+          >
+            <span className="absolute h-7 w-4 -rotate-45 rounded-full rounded-br-sm bg-emerald-200 shadow-sm" />
+            <span className="absolute mt-2 h-5 w-0.5 rotate-45 rounded-full bg-yellow-200/80" />
+          </span>
+          <span className="leading-tight">
+            <span className="block text-2xl font-black tracking-wide text-yellow-200">
+              Herbal Care
+            </span>
+            <span className="mt-1 block text-sm font-semibold text-emerald-200">
+              Билкова грижа с внимание
+            </span>
           </span>
         </Link>
 
