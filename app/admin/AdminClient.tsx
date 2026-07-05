@@ -166,6 +166,20 @@ const mvpChecklistItems = [
   "Vercel deploy е активен",
 ] as const;
 
+const launchChecklistItems = [
+  "Няма тестови билки",
+  "Няма тестови симптоми",
+  "Няма тестови категории",
+  "Всички основни страници се отварят",
+  "Регистрацията и входът работят",
+  "Любими билки работят",
+  "Contact формата записва съобщения",
+  "AI помощникът показва безопасни предупреждения",
+  "Admin панелът е достъпен само за админ",
+  "Мобилният изглед е проверен",
+  "Vercel deployment е успешен",
+] as const;
+
 const contentQualityChecklistItems = [
   "Има ясно кратко описание",
   "Има подробно описание",
@@ -883,6 +897,36 @@ export default function AdminClient() {
                 ✓
               </span>
               <span className="leading-6 text-emerald-50">{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10 rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-yellow-200">
+              Преди пускане
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-100">
+              Последни проверки преди пускане
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-yellow-50">
+            Минете през този списък преди да приемете версията като стабилен MVP.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {launchChecklistItems.map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-3 rounded-2xl border border-yellow-300/20 bg-emerald-950/50 p-4"
+            >
+              <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-sm font-black text-green-950">
+                ✓
+              </span>
+              <span className="leading-6 text-yellow-50">{item}</span>
             </div>
           ))}
         </div>
