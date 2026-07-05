@@ -32,6 +32,9 @@ type AdminHerb = {
   latin: string | null;
   emoji: string | null;
   image_url?: string | null;
+  image_alt?: string | null;
+  image_credit?: string | null;
+  image_source_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -386,7 +389,7 @@ export default function AdminClient() {
         client
           .from("herbs")
           .select(
-            "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+            "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
           )
           .order("name", { ascending: true }),
         client
@@ -1534,7 +1537,7 @@ export default function AdminClient() {
                           {herb.image_url ? (
                             <img
                               src={herb.image_url}
-                              alt={herb.name}
+                              alt={herb.image_alt || "Снимка на билка"}
                               className="mt-2 h-16 w-24 rounded-2xl object-cover ring-1 ring-white/10 md:mt-0 md:h-14 md:w-20"
                             />
                           ) : (
@@ -1542,6 +1545,11 @@ export default function AdminClient() {
                               Без снимка
                             </span>
                           )}
+                          {herb.image_credit ? (
+                            <p className="mt-2 text-xs leading-5 text-emerald-200">
+                              Кредит: {herb.image_credit}
+                            </p>
+                          ) : null}
                         </div>
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">

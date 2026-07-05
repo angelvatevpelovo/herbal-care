@@ -84,7 +84,7 @@ export default function HerbsFilter({ herbs, categories, connections }: HerbsFil
                 {herb.image_url ? (
                   <img
                     src={herb.image_url}
-                    alt={herb.name}
+                    alt={herb.image_alt || "Снимка на билка"}
                     className="h-44 w-full rounded-2xl object-cover ring-1 ring-white/10"
                   />
                 ) : (

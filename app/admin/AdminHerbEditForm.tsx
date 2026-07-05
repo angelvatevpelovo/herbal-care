@@ -10,6 +10,9 @@ type EditableHerb = {
   latin: string | null;
   emoji: string | null;
   image_url?: string | null;
+  image_alt?: string | null;
+  image_credit?: string | null;
+  image_source_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -25,6 +28,9 @@ type HerbFormValues = {
   latin: string;
   emoji: string;
   image_url: string;
+  image_alt: string;
+  image_credit: string;
+  image_source_url: string;
   short_description: string;
   description: string;
   traditional_uses: string;
@@ -46,6 +52,9 @@ const textFields = [
   { name: "latin", label: "Латинско име", required: false },
   { name: "emoji", label: "Емоджи", required: false },
   { name: "image_url", label: "URL на снимка", required: false },
+  { name: "image_alt", label: "Alt текст за снимката", required: false },
+  { name: "image_credit", label: "Кредит / автор на снимката", required: false },
+  { name: "image_source_url", label: "URL към източника на снимката", required: false },
 ] as const;
 
 const textareaFields = [
@@ -65,6 +74,9 @@ function valuesFromHerb(herb: EditableHerb): HerbFormValues {
     latin: herb.latin ?? "",
     emoji: herb.emoji ?? "",
     image_url: herb.image_url ?? "",
+    image_alt: herb.image_alt ?? "",
+    image_credit: herb.image_credit ?? "",
+    image_source_url: herb.image_source_url ?? "",
     short_description: herb.short_description ?? "",
     description: herb.description ?? "",
     traditional_uses: herb.traditional_uses ?? "",
@@ -125,6 +137,9 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
         latin: normalizeOptionalValue(values.latin),
         emoji: normalizeOptionalValue(values.emoji),
         image_url: normalizeOptionalValue(values.image_url),
+        image_alt: normalizeOptionalValue(values.image_alt),
+        image_credit: normalizeOptionalValue(values.image_credit),
+        image_source_url: normalizeOptionalValue(values.image_source_url),
         short_description: shortDescription,
         description: normalizeOptionalValue(values.description),
         traditional_uses: normalizeOptionalValue(values.traditional_uses),
@@ -135,7 +150,7 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
       })
       .eq("id", herb.id)
       .select(
-        "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+        "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
       )
       .single();
 
@@ -197,7 +212,7 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
         {values.image_url.trim() ? (
           <img
             src={values.image_url}
-            alt={values.name || herb.name}
+            alt={values.image_alt || "Снимка на билка"}
             className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-white/10 sm:h-52"
           />
         ) : (

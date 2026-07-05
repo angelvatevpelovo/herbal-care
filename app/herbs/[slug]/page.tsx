@@ -13,6 +13,9 @@ type HerbDetail = {
   latin: string | null;
   emoji: string | null;
   image_url?: string | null;
+  image_alt?: string | null;
+  image_credit?: string | null;
+  image_source_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -42,7 +45,7 @@ async function getHerb(slug: string): Promise<HerbDetail | null> {
   const { data, error } = await supabase
     .from("herbs")
     .select(
-      "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
+      "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -99,11 +102,29 @@ export default async function HerbDetailPage({
 
         <article className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
           {herb.image_url ? (
-            <img
-              src={herb.image_url}
-              alt={herb.name}
-              className="h-64 w-full rounded-3xl object-cover ring-1 ring-white/10 sm:h-80"
-            />
+            <figure>
+              <img
+                src={herb.image_url}
+                alt={herb.image_alt || "Снимка на билка"}
+                className="h-64 w-full rounded-3xl object-cover ring-1 ring-white/10 sm:h-80"
+              />
+              {herb.image_credit || herb.image_source_url ? (
+                <figcaption className="mt-2 text-xs text-emerald-200">
+                  Снимка: {herb.image_credit ?? "не е посочен автор"}
+                  {herb.image_source_url ? (
+                    <>
+                      {" "}
+                      <Link
+                        href={herb.image_source_url}
+                        className="font-semibold text-yellow-300 hover:text-yellow-100"
+                      >
+                        източник
+                      </Link>
+                    </>
+                  ) : null}
+                </figcaption>
+              ) : null}
+            </figure>
           ) : (
             <div className="flex h-64 w-full flex-col items-center justify-center rounded-3xl border border-emerald-700 bg-emerald-950/60 text-emerald-100 ring-1 ring-white/10 sm:h-80">
               <span className="text-6xl" aria-hidden="true">

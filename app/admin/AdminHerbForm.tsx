@@ -10,6 +10,9 @@ type CreatedHerb = {
   latin: string | null;
   emoji: string | null;
   image_url?: string | null;
+  image_alt?: string | null;
+  image_credit?: string | null;
+  image_source_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -29,6 +32,9 @@ type HerbFormValues = {
   latin: string;
   emoji: string;
   image_url: string;
+  image_alt: string;
+  image_credit: string;
+  image_source_url: string;
   short_description: string;
   description: string;
   traditional_uses: string;
@@ -44,6 +50,9 @@ const initialValues: HerbFormValues = {
   latin: "",
   emoji: "",
   image_url: "",
+  image_alt: "",
+  image_credit: "",
+  image_source_url: "",
   short_description: "",
   description: "",
   traditional_uses: "",
@@ -59,6 +68,9 @@ const textFields = [
   { name: "latin", label: "Латинско име", required: false, placeholder: "Matricaria chamomilla" },
   { name: "emoji", label: "Емоджи", required: false, placeholder: "🌿" },
   { name: "image_url", label: "URL на снимка", required: false, placeholder: "https://example.com/herb-image.jpg" },
+  { name: "image_alt", label: "Alt текст за снимката", required: false, placeholder: "Снимка на лайка" },
+  { name: "image_credit", label: "Кредит / автор на снимката", required: false, placeholder: "Автор или източник" },
+  { name: "image_source_url", label: "URL към източника на снимката", required: false, placeholder: "https://example.com/source" },
 ] as const;
 
 const textareaFields = [
@@ -150,6 +162,9 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
         latin: normalizeOptionalValue(values.latin),
         emoji: normalizeOptionalValue(values.emoji),
         image_url: normalizeOptionalValue(values.image_url),
+        image_alt: normalizeOptionalValue(values.image_alt),
+        image_credit: normalizeOptionalValue(values.image_credit),
+        image_source_url: normalizeOptionalValue(values.image_source_url),
         short_description: shortDescription,
         description: normalizeOptionalValue(values.description),
         traditional_uses: normalizeOptionalValue(values.traditional_uses),
@@ -159,7 +174,7 @@ export default function AdminHerbForm({ onCreated }: AdminHerbFormProps) {
         when_to_see_doctor: normalizeOptionalValue(values.when_to_see_doctor),
       })
       .select(
-        "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+        "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
       )
       .single();
 
