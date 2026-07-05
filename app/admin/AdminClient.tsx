@@ -278,6 +278,34 @@ function findRiskyMedicalPhrase(values: Array<string | null | undefined>) {
   return riskyMedicalPhrases.find((phrase) => text.includes(phrase));
 }
 
+function normalizeDuplicateValue(value: string | null | undefined) {
+  return (value ?? "").trim().toLocaleLowerCase("bg-BG").replace(/\s+/g, " ");
+}
+
+function getDuplicateValues<T>(
+  items: T[],
+  getValue: (item: T) => string | null | undefined
+) {
+  const groups = new Map<string, { value: string; count: number }>();
+
+  for (const item of items) {
+    const originalValue = getValue(item)?.trim();
+    const normalizedValue = normalizeDuplicateValue(originalValue);
+
+    if (!normalizedValue) {
+      continue;
+    }
+
+    const existing = groups.get(normalizedValue);
+    groups.set(normalizedValue, {
+      value: existing?.value ?? originalValue ?? normalizedValue,
+      count: (existing?.count ?? 0) + 1,
+    });
+  }
+
+  return [...groups.values()].filter((group) => group.count > 1);
+}
+
 export default function AdminClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -634,6 +662,56 @@ export default function AdminClient() {
     .filter((item): item is { recipe: AdminHerbRecipe; matchedPhrase: string } =>
       Boolean(item.matchedPhrase)
     );
+  const duplicateHerbIssues = [
+    ...getDuplicateValues(herbs, (herb) => herb.name).map((duplicate) => ({
+      type: "Билка",
+      value: `Име: ${duplicate.value}`,
+    })),
+    ...getDuplicateValues(herbs, (herb) => herb.slug).map((duplicate) => ({
+      type: "Билка",
+      value: `Slug: ${duplicate.value}`,
+    })),
+  ];
+  const duplicateSymptomIssues = [
+    ...getDuplicateValues(symptoms, (symptom) => symptom.name).map((duplicate) => ({
+      type: "Симптом",
+      value: `Име: ${duplicate.value}`,
+    })),
+    ...getDuplicateValues(symptoms, (symptom) => symptom.slug).map((duplicate) => ({
+      type: "Симптом",
+      value: `Slug: ${duplicate.value}`,
+    })),
+  ];
+  const duplicateCategoryIssues = [
+    ...getDuplicateValues(categories, (category) => category.name).map((duplicate) => ({
+      type: "Категория",
+      value: `Име: ${duplicate.value}`,
+    })),
+    ...getDuplicateValues(categories, (category) => category.slug).map((duplicate) => ({
+      type: "Категория",
+      value: `Slug: ${duplicate.value}`,
+    })),
+  ];
+  const duplicateRecipeIssues = [
+    ...getDuplicateValues(herbRecipes, (recipe) => recipe.title).map((duplicate) => ({
+      type: "Рецепта",
+      value: `Заглавие: ${duplicate.value}`,
+    })),
+    ...getDuplicateValues(herbRecipes, (recipe) => {
+      const title = normalizeDuplicateValue(recipe.title);
+      const herbName = normalizeDuplicateValue(herbNameById.get(recipe.herb_id));
+      return title && herbName ? `${title} + ${herbName}` : "";
+    }).map((duplicate) => ({
+      type: "Рецепта",
+      value: `Заглавие + билка: ${duplicate.value}`,
+    })),
+  ];
+  const duplicateIssues = [
+    ...duplicateHerbIssues,
+    ...duplicateSymptomIssues,
+    ...duplicateCategoryIssues,
+    ...duplicateRecipeIssues,
+  ];
   const normalizedRecipeSearch = recipeSearch.trim().toLowerCase();
   const filteredHerbRecipes = herbRecipes.filter((recipe) => {
     if (!normalizedRecipeSearch) {
@@ -1238,6 +1316,63 @@ export default function AdminClient() {
                 ))}
               </div>
             </article>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-emerald-700/70 bg-emerald-950/70 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+              Контрол на базата
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-200">
+              Проверка за дублирани записи
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-emerald-100">
+            Тази проверка помага при разширяване на базата със seed файлове и ръчно
+            добавяне на съдържание.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Дублирани билки", value: duplicateHerbIssues.length },
+            { label: "Дублирани симптоми", value: duplicateSymptomIssues.length },
+            { label: "Дублирани категории", value: duplicateCategoryIssues.length },
+            { label: "Дублирани рецепти", value: duplicateRecipeIssues.length },
+          ].map((item) => (
+            <article
+              key={item.label}
+              className="rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4"
+            >
+              <p className="text-sm font-semibold text-emerald-200">{item.label}:</p>
+              <p className="mt-2 text-3xl font-bold text-yellow-200">{item.value}</p>
+            </article>
+          ))}
+        </div>
+
+        {duplicateIssues.length === 0 ? (
+          <div className="mt-5 rounded-2xl border border-emerald-800 bg-emerald-950/60 p-4 text-emerald-50">
+            Не са открити дублирани записи.
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {duplicateIssues.slice(0, 10).map((issue, index) => (
+              <article
+                key={`${issue.type}-${issue.value}-${index}`}
+                className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-4"
+              >
+                <p className="text-sm font-semibold uppercase tracking-[0.14em] text-yellow-200">
+                  {issue.type}
+                </p>
+                <p className="mt-2 font-bold text-yellow-100">{issue.value}</p>
+                <p className="mt-2 text-sm text-emerald-50">
+                  Проверете дали записите не се повтарят.
+                </p>
+              </article>
+            ))}
           </div>
         )}
       </section>
