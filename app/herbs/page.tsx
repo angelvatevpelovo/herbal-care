@@ -11,6 +11,7 @@ export type HerbListItem = {
   name: string;
   latin: string | null;
   emoji: string | null;
+  image_url?: string | null;
   short_description: string | null;
   created_at: string | null;
 };
@@ -39,7 +40,7 @@ async function getHerbsLibrary() {
   ] = await Promise.all([
     supabase
       .from("herbs")
-      .select("id, slug, name, latin, emoji, short_description, created_at")
+      .select("id, slug, name, latin, emoji, image_url, short_description, created_at")
       .order("name", { ascending: true }),
     supabase
       .from("categories")

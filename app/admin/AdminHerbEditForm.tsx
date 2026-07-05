@@ -9,6 +9,7 @@ type EditableHerb = {
   name: string;
   latin: string | null;
   emoji: string | null;
+  image_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -23,6 +24,7 @@ type HerbFormValues = {
   name: string;
   latin: string;
   emoji: string;
+  image_url: string;
   short_description: string;
   description: string;
   traditional_uses: string;
@@ -43,6 +45,7 @@ const textFields = [
   { name: "name", label: "Име", required: true },
   { name: "latin", label: "Латинско име", required: false },
   { name: "emoji", label: "Емоджи", required: false },
+  { name: "image_url", label: "URL на снимка", required: false },
 ] as const;
 
 const textareaFields = [
@@ -61,6 +64,7 @@ function valuesFromHerb(herb: EditableHerb): HerbFormValues {
     name: herb.name ?? "",
     latin: herb.latin ?? "",
     emoji: herb.emoji ?? "",
+    image_url: herb.image_url ?? "",
     short_description: herb.short_description ?? "",
     description: herb.description ?? "",
     traditional_uses: herb.traditional_uses ?? "",
@@ -120,6 +124,7 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
         name,
         latin: normalizeOptionalValue(values.latin),
         emoji: normalizeOptionalValue(values.emoji),
+        image_url: normalizeOptionalValue(values.image_url),
         short_description: shortDescription,
         description: normalizeOptionalValue(values.description),
         traditional_uses: normalizeOptionalValue(values.traditional_uses),
@@ -130,7 +135,7 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
       })
       .eq("id", herb.id)
       .select(
-        "id, slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+        "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
       )
       .single();
 
@@ -185,6 +190,21 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
             />
           </label>
         ))}
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4">
+        <p className="text-sm font-semibold text-emerald-100">Преглед на снимката</p>
+        {values.image_url.trim() ? (
+          <img
+            src={values.image_url}
+            alt={values.name || herb.name}
+            className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-white/10 sm:h-52"
+          />
+        ) : (
+          <p className="mt-3 rounded-2xl border border-emerald-700 bg-emerald-900/50 p-4 text-sm text-emerald-100">
+            Няма добавена снимка.
+          </p>
+        )}
       </div>
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">

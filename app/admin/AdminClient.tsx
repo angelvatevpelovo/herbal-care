@@ -31,6 +31,7 @@ type AdminHerb = {
   name: string;
   latin: string | null;
   emoji: string | null;
+  image_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -348,7 +349,7 @@ export default function AdminClient() {
         client
           .from("herbs")
           .select(
-            "id, slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+            "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
           )
           .order("name", { ascending: true }),
         client
@@ -1192,7 +1193,8 @@ export default function AdminClient() {
             </div>
 
             <div className="mt-5 overflow-hidden rounded-3xl bg-white/10 shadow-xl ring-1 ring-white/10">
-              <div className="hidden grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+              <div className="hidden grid-cols-[0.8fr_1fr_1fr_1fr_1.4fr_1.4fr_auto] gap-4 border-b border-emerald-800/70 bg-emerald-950/70 px-5 py-4 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-300 md:grid">
+                <span>Снимка</span>
                 <span>Име</span>
                 <span>Латинско име</span>
                 <span>Slug</span>
@@ -1223,8 +1225,24 @@ export default function AdminClient() {
                     return (
                       <article
                         key={herb.id}
-                        className="grid gap-3 px-5 py-4 md:grid-cols-[1fr_1fr_1fr_1.4fr_1.4fr_auto] md:items-start md:gap-4"
+                        className="grid gap-3 px-5 py-4 md:grid-cols-[0.8fr_1fr_1fr_1fr_1.4fr_1.4fr_auto] md:items-start md:gap-4"
                       >
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
+                            Снимка
+                          </p>
+                          {herb.image_url ? (
+                            <img
+                              src={herb.image_url}
+                              alt={herb.name}
+                              className="mt-2 h-16 w-24 rounded-2xl object-cover ring-1 ring-white/10 md:mt-0 md:h-14 md:w-20"
+                            />
+                          ) : (
+                            <span className="mt-2 inline-flex min-h-10 items-center rounded-2xl border border-emerald-700 bg-emerald-950/70 px-3 py-2 text-sm font-semibold text-emerald-100 md:mt-0">
+                              Без снимка
+                            </span>
+                          )}
+                        </div>
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-300 md:hidden">
                             Име

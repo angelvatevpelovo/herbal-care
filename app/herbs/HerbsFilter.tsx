@@ -81,9 +81,20 @@ export default function HerbsFilter({ herbs, categories, connections }: HerbsFil
               className="group rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 transition hover:-translate-y-1 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-yellow-300 sm:p-6"
             >
               <article>
-                <div className="text-4xl" aria-hidden="true">
-                  {herb.emoji ?? "🌿"}
-                </div>
+                {herb.image_url ? (
+                  <img
+                    src={herb.image_url}
+                    alt={herb.name}
+                    className="h-44 w-full rounded-2xl object-cover ring-1 ring-white/10"
+                  />
+                ) : (
+                  <div className="flex h-44 w-full flex-col items-center justify-center rounded-2xl border border-emerald-700 bg-emerald-950/60 text-emerald-100">
+                    <span className="text-4xl" aria-hidden="true">
+                      {herb.emoji ?? "🌿"}
+                    </span>
+                    <span className="mt-3 text-sm font-semibold">Няма снимка</span>
+                  </div>
+                )}
 
                 <h2 className="mt-4 text-2xl font-bold text-yellow-200">{herb.name}</h2>
 

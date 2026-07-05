@@ -12,6 +12,7 @@ type HerbDetail = {
   name: string;
   latin: string | null;
   emoji: string | null;
+  image_url?: string | null;
   short_description: string | null;
   description: string | null;
   traditional_uses: string | null;
@@ -29,7 +30,7 @@ async function getHerb(slug: string): Promise<HerbDetail | null> {
   const { data, error } = await supabase
     .from("herbs")
     .select(
-      "id, slug, name, latin, emoji, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
+      "id, slug, name, latin, emoji, image_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor",
     )
     .eq("slug", slug)
     .maybeSingle();
@@ -63,7 +64,22 @@ export default async function HerbDetailPage({
         </Link>
 
         <article className="mt-8 rounded-3xl bg-white/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-8">
-          <div className="text-5xl sm:text-6xl" aria-hidden="true">
+          {herb.image_url ? (
+            <img
+              src={herb.image_url}
+              alt={herb.name}
+              className="h-64 w-full rounded-3xl object-cover ring-1 ring-white/10 sm:h-80"
+            />
+          ) : (
+            <div className="flex h-64 w-full flex-col items-center justify-center rounded-3xl border border-emerald-700 bg-emerald-950/60 text-emerald-100 ring-1 ring-white/10 sm:h-80">
+              <span className="text-6xl" aria-hidden="true">
+                {herb.emoji ?? "🌿"}
+              </span>
+              <span className="mt-4 text-sm font-semibold">Няма добавена снимка</span>
+            </div>
+          )}
+
+          <div className="mt-6 text-5xl sm:text-6xl" aria-hidden="true">
             {herb.emoji ?? "🌿"}
           </div>
 
