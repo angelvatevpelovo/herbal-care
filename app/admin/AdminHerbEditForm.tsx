@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { type ChangeEvent, type FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type EditableHerb = {
@@ -46,6 +46,11 @@ type AdminHerbEditFormProps = {
   onUpdated: (herb: EditableHerb) => void;
 };
 
+type UploadMessage = {
+  type: "success" | "error";
+  text: string;
+};
+
 const textFields = [
   { name: "slug", label: "Slug", required: true },
   { name: "name", label: "Име", required: true },
@@ -66,6 +71,9 @@ const textareaFields = [
   { name: "interactions", label: "Взаимодействия", required: false, rows: 5 },
   { name: "when_to_see_doctor", label: "Кога да се потърси лекар", required: false, rows: 5 },
 ] as const;
+
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+const maxImageSize = 5 * 1024 * 1024;
 
 function valuesFromHerb(herb: EditableHerb): HerbFormValues {
   return {
@@ -95,8 +103,10 @@ function normalizeOptionalValue(value: string) {
 export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHerbEditFormProps) {
   const [values, setValues] = useState<HerbFormValues>(() => valuesFromHerb(herb));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<UploadMessage | null>(null);
 
   useEffect(() => {
     setValues(valuesFromHerb(herb));
@@ -106,6 +116,102 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
 
   function updateValue(name: keyof HerbFormValues, value: string) {
     setValues((current) => ({ ...current, [name]: value }));
+  }
+
+  async function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    setUploadMessage(null);
+
+    if (!file) {
+      return;
+    }
+
+    if (!allowedImageTypes.includes(file.type)) {
+      setUploadMessage({
+        type: "error",
+        text: "Файлът трябва да бъде изображение.",
+      });
+      return;
+    }
+
+    if (file.size > maxImageSize) {
+      setUploadMessage({
+        type: "error",
+        text: "Файлът е твърде голям. Максимум 5MB.",
+      });
+      return;
+    }
+
+    if (!supabase) {
+      setUploadMessage({
+        type: "error",
+        text: "Възникна проблем при качване на снимката.",
+      });
+      return;
+    }
+
+    const extensionByType: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+    };
+    const safeSlug = (values.slug.trim() || herb.slug).replace(/[^a-zA-Z0-9-]/g, "-");
+    const extension = extensionByType[file.type] ?? "jpg";
+    const path = `herbs/${safeSlug}-${Date.now()}.${extension}`;
+
+    setIsImageUploading(true);
+    setUploadMessage({
+      type: "success",
+      text: "Снимката се качва...",
+    });
+
+    const { error: uploadError } = await supabase.storage
+      .from("herb-images")
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      setIsImageUploading(false);
+      setUploadMessage({
+        type: "error",
+        text: "Възникна проблем при качване на снимката.",
+      });
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("herb-images").getPublicUrl(path);
+
+    const { data, error: updateError } = await supabase
+      .from("herbs")
+      .update({ image_url: publicUrl })
+      .eq("id", herb.id)
+      .select(
+        "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, preparation, precautions, interactions, when_to_see_doctor"
+      )
+      .single();
+
+    setIsImageUploading(false);
+
+    if (updateError || !data) {
+      setUploadMessage({
+        type: "error",
+        text: "Възникна проблем при качване на снимката.",
+      });
+      return;
+    }
+
+    setValues((current) => ({ ...current, image_url: publicUrl }));
+    setUploadMessage({
+      type: "success",
+      text: "Снимката беше качена успешно.",
+    });
+    onUpdated(data as EditableHerb);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -209,6 +315,32 @@ export default function AdminHerbEditForm({ herb, onCancel, onUpdated }: AdminHe
 
       <div className="mt-4 rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4">
         <p className="text-sm font-semibold text-emerald-100">Преглед на снимката</p>
+        <label className="mt-3 block">
+          <span className="text-sm font-semibold text-emerald-100">
+            Качи снимка на билката
+          </span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={isImageUploading}
+            onChange={handleImageUpload}
+            className="mt-2 block w-full rounded-2xl border border-emerald-700 bg-emerald-950/70 px-4 py-3 text-sm text-emerald-50 file:mr-4 file:rounded-xl file:border-0 file:bg-yellow-300 file:px-4 file:py-2 file:font-bold file:text-green-950 hover:file:bg-yellow-200 disabled:cursor-not-allowed disabled:opacity-70"
+          />
+        </label>
+        <p className="mt-2 text-xs leading-5 text-emerald-200">
+          Позволени файлове: JPG, PNG или WebP. Максимален размер: 5MB.
+        </p>
+        {uploadMessage ? (
+          <p
+            className={
+              uploadMessage.type === "success"
+                ? "mt-3 rounded-2xl border border-emerald-300/40 bg-emerald-900/70 p-3 text-sm text-emerald-50"
+                : "mt-3 rounded-2xl border border-red-300/40 bg-red-950/70 p-3 text-sm text-red-50"
+            }
+          >
+            {uploadMessage.text}
+          </p>
+        ) : null}
         {values.image_url.trim() ? (
           <img
             src={values.image_url}
