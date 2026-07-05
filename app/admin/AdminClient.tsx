@@ -508,6 +508,12 @@ export default function AdminClient() {
       value.toLowerCase().includes(normalizedCategorySearch)
     );
   });
+  const incompleteContentHerbs = herbs
+    .filter((herb) => getMissingHerbContentFields(herb).length > 0)
+    .slice(0, 8);
+  const herbsWithoutAnyRelations = herbs
+    .filter((herb) => !herbIdsWithSymptoms.has(herb.id) && !herbIdsWithCategories.has(herb.id))
+    .slice(0, 8);
 
   function handleHerbCreated(herb: AdminHerb) {
     setHerbs((current) =>
@@ -769,6 +775,67 @@ export default function AdminClient() {
               <p className="mt-2 text-3xl font-bold text-yellow-200">{item.value}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-yellow-200">
+              Контрол на съдържанието
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-yellow-100">Проблемни билки</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-yellow-50">
+            Кратък списък с билки, които имат нужда от преглед преди публикуване или
+            обновяване.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <article className="rounded-2xl border border-emerald-800 bg-emerald-950/60 p-4">
+            <h3 className="text-lg font-bold text-yellow-200">Непълно съдържание</h3>
+            <div className="mt-4 space-y-3">
+              {incompleteContentHerbs.length === 0 ? (
+                <p className="text-emerald-100">Няма открити проблеми.</p>
+              ) : (
+                incompleteContentHerbs.map((herb) => (
+                  <div
+                    key={herb.id}
+                    className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3"
+                  >
+                    <p className="font-semibold text-yellow-100">{herb.name}</p>
+                    <p className="mt-1 text-sm text-emerald-200">Slug: {herb.slug}</p>
+                    <p className="mt-2 text-sm font-semibold text-yellow-200">
+                      Липсва съдържание
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="rounded-2xl border border-emerald-800 bg-emerald-950/60 p-4">
+            <h3 className="text-lg font-bold text-yellow-200">Без връзки</h3>
+            <div className="mt-4 space-y-3">
+              {herbsWithoutAnyRelations.length === 0 ? (
+                <p className="text-emerald-100">Няма открити проблеми.</p>
+              ) : (
+                herbsWithoutAnyRelations.map((herb) => (
+                  <div
+                    key={herb.id}
+                    className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3"
+                  >
+                    <p className="font-semibold text-yellow-100">{herb.name}</p>
+                    <p className="mt-1 text-sm text-emerald-200">Slug: {herb.slug}</p>
+                    <p className="mt-2 text-sm font-semibold text-yellow-200">
+                      Липсват симптоми и категории
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
         </div>
       </section>
 
