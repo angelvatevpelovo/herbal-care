@@ -16,6 +16,8 @@ export type HerbListItem = {
   image_credit?: string | null;
   image_source_url?: string | null;
   short_description: string | null;
+  description: string | null;
+  traditional_uses: string | null;
   created_at: string | null;
 };
 
@@ -44,7 +46,7 @@ async function getHerbsLibrary() {
     supabase
       .from("herbs")
       .select(
-        "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, created_at"
+        "id, slug, name, latin, emoji, image_url, image_alt, image_credit, image_source_url, short_description, description, traditional_uses, created_at"
       )
       .order("name", { ascending: true }),
     supabase
@@ -94,6 +96,10 @@ export default async function HerbsPage() {
             Тук ще откриеш образователна информация за билки, тяхната традиционна употреба и важни
             предпазни мерки. Информацията не е лечение и не замества медицинска консултация.
           </p>
+
+          <div className="mt-5 rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-4 text-yellow-50">
+            Информацията е образователна и не замества лекарска консултация.
+          </div>
         </header>
 
         <HerbsFilter herbs={herbs} categories={categories} connections={connections} />
