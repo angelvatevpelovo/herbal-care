@@ -18,15 +18,29 @@ const footerLinks = [
 export default function Footer() {
   return (
     <footer className="mt-auto border-t border-emerald-900 bg-green-950 px-4 py-8 text-emerald-50 sm:px-6">
-      <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-[1.2fr_0.8fr]">
+      <div className="mx-auto grid max-w-6xl gap-7 md:grid-cols-[1.15fr_0.85fr] md:items-start">
         <section>
-          <h2 className="text-xl font-bold text-yellow-200">Herbal Care</h2>
-          <p className="mt-3 max-w-2xl leading-7 text-emerald-100">
+          <div className="flex items-center gap-3">
+            <span
+              className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/60 bg-gradient-to-br from-emerald-700 to-green-950 shadow-lg shadow-black/20"
+              aria-hidden="true"
+            >
+              <span className="absolute h-6 w-3.5 -rotate-45 rounded-full rounded-br-sm bg-emerald-200 shadow-sm" />
+              <span className="absolute mt-2 h-4 w-0.5 rotate-45 rounded-full bg-yellow-200/80" />
+            </span>
+            <div>
+              <h2 className="text-2xl font-black tracking-wide text-yellow-200">Herbal Care</h2>
+              <p className="mt-1 text-sm font-semibold text-emerald-200">
+                Билкова грижа с внимание и безопасност
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-4 max-w-2xl leading-7 text-emerald-100">
             Образователна информация за билки, симптоми и природна грижа.
           </p>
           <p className="mt-4 max-w-3xl rounded-2xl border border-yellow-300/40 bg-yellow-300/10 p-4 text-sm font-semibold leading-6 text-yellow-50">
-            Herbal Care не поставя диагнози, не назначава лечение и не замества
-            лекарска консултация.
+            Информацията е образователна и не замества лекарска консултация.
           </p>
         </section>
 
