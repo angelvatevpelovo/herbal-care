@@ -248,6 +248,21 @@ const herbOverviewFilters: { key: HerbOverviewFilter; label: string }[] = [
   { key: "without_symptoms_and_categories", label: "Без симптоми и категории" },
 ];
 
+const riskyMedicalPhrases: string[] = [
+  "лекува",
+  "излекува",
+  "излекуване",
+  "лечение",
+  "гарантира",
+  "гарантирано",
+  "премахва болест",
+  "сигурно помага",
+  "замества лекар",
+  "без нужда от лекар",
+  "вместо лекарства",
+  "спирайте лекарствата",
+];
+
 function getAnswerPreview(answer: string) {
   return answer.length > 220 ? `${answer.slice(0, 220)}...` : answer;
 }
@@ -256,6 +271,11 @@ function getMissingHerbContentFields(herb: AdminHerb) {
   return herbContentFields
     .filter(({ key }) => !herb[key]?.trim())
     .map(({ label }) => label);
+}
+
+function findRiskyMedicalPhrase(values: Array<string | null | undefined>) {
+  const text = values.filter(Boolean).join(" ").toLocaleLowerCase("bg-BG");
+  return riskyMedicalPhrases.find((phrase) => text.includes(phrase));
 }
 
 export default function AdminClient() {
@@ -583,6 +603,37 @@ export default function AdminClient() {
     .filter((herb) => !herbIdsWithSymptoms.has(herb.id) && !herbIdsWithCategories.has(herb.id))
     .slice(0, 8);
   const herbNameById = new Map(herbs.map((herb) => [herb.id, herb.name]));
+  const riskyHerbs = herbs
+    .map((herb) => ({
+      herb,
+      matchedPhrase: findRiskyMedicalPhrase([
+        herb.short_description,
+        herb.description,
+        herb.traditional_uses,
+        herb.preparation,
+        herb.precautions,
+        herb.interactions,
+        herb.when_to_see_doctor,
+      ]),
+    }))
+    .filter((item): item is { herb: AdminHerb; matchedPhrase: string } =>
+      Boolean(item.matchedPhrase)
+    );
+  const riskyRecipes = herbRecipes
+    .map((recipe) => ({
+      recipe,
+      matchedPhrase: findRiskyMedicalPhrase([
+        recipe.title,
+        recipe.preparation_type,
+        recipe.ingredients,
+        recipe.instructions,
+        recipe.dosage_note,
+        recipe.safety_note,
+      ]),
+    }))
+    .filter((item): item is { recipe: AdminHerbRecipe; matchedPhrase: string } =>
+      Boolean(item.matchedPhrase)
+    );
   const normalizedRecipeSearch = recipeSearch.trim().toLowerCase();
   const filteredHerbRecipes = herbRecipes.filter((recipe) => {
     if (!normalizedRecipeSearch) {
@@ -1104,6 +1155,91 @@ export default function AdminClient() {
             </div>
           </article>
         </div>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-red-300/30 bg-red-950/40 p-5 shadow-xl ring-1 ring-white/10 sm:p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-red-200">
+              Безопасност на текста
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-red-100">
+              Проверка за рискови твърдения
+            </h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-red-50">
+            Тази проверка е помощна. Винаги преглеждайте съдържанието ръчно преди
+            публикуване.
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <article className="rounded-2xl border border-red-300/30 bg-red-950/50 p-4">
+            <p className="text-sm font-semibold text-red-100">
+              Открити потенциално рискови билки:
+            </p>
+            <p className="mt-2 text-3xl font-bold text-yellow-200">{riskyHerbs.length}</p>
+          </article>
+          <article className="rounded-2xl border border-red-300/30 bg-red-950/50 p-4">
+            <p className="text-sm font-semibold text-red-100">
+              Открити потенциално рискови рецепти:
+            </p>
+            <p className="mt-2 text-3xl font-bold text-yellow-200">{riskyRecipes.length}</p>
+          </article>
+        </div>
+
+        {riskyHerbs.length === 0 && riskyRecipes.length === 0 ? (
+          <div className="mt-5 rounded-2xl border border-emerald-300/30 bg-emerald-950/60 p-4 text-emerald-50">
+            Не са открити рискови формулировки.
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <article className="rounded-2xl border border-red-300/30 bg-red-950/50 p-4">
+              <h3 className="text-lg font-bold text-red-100">Билки за преглед</h3>
+              <div className="mt-4 space-y-3">
+                {riskyHerbs.slice(0, 10).map(({ herb, matchedPhrase }) => (
+                  <div
+                    key={herb.id}
+                    className="rounded-2xl border border-red-300/20 bg-red-900/30 p-3"
+                  >
+                    <p className="font-semibold text-red-50">{herb.name}</p>
+                    <p className="mt-1 text-sm text-yellow-100">
+                      Съвпадение: {matchedPhrase}
+                    </p>
+                    <p className="mt-2 text-sm text-red-50">
+                      Прегледайте текста и използвайте по-внимателна формулировка.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-red-300/30 bg-red-950/50 p-4">
+              <h3 className="text-lg font-bold text-red-100">Рецепти за преглед</h3>
+              <div className="mt-4 space-y-3">
+                {riskyRecipes.slice(0, 10).map(({ recipe, matchedPhrase }) => (
+                  <div
+                    key={recipe.id}
+                    className="rounded-2xl border border-red-300/20 bg-red-900/30 p-3"
+                  >
+                    <p className="font-semibold text-red-50">
+                      {recipe.title ?? "Рецепта без заглавие"}
+                    </p>
+                    <p className="mt-1 text-sm text-emerald-100">
+                      Билка: {herbNameById.get(recipe.herb_id) ?? "Непозната билка"}
+                    </p>
+                    <p className="mt-1 text-sm text-yellow-100">
+                      Съвпадение: {matchedPhrase}
+                    </p>
+                    <p className="mt-2 text-sm text-red-50">
+                      Прегледайте текста и използвайте по-внимателна формулировка.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        )}
       </section>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
