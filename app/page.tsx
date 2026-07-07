@@ -1,7 +1,51 @@
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import Header from "./components/Header";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+type FeaturedHerb = {
+  slug: string;
+  name: string;
+  image_url?: string | null;
+  image_alt?: string | null;
+  short_description: string | null;
+  created_at?: string | null;
+};
+
+async function getFeaturedHerb(): Promise<FeaturedHerb | null> {
+  if (!supabase) {
+    return null;
+  }
+
+  const latest = await supabase
+    .from("herbs")
+    .select("slug, name, image_url, image_alt, short_description, created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!latest.error && latest.data) {
+    return latest.data as FeaturedHerb;
+  }
+
+  const fallback = await supabase
+    .from("herbs")
+    .select("slug, name, image_url, image_alt, short_description")
+    .order("name", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (fallback.error) {
+    throw new Error(fallback.error.message);
+  }
+
+  return (fallback.data as FeaturedHerb | null) ?? null;
+}
+
+export default async function HomePage() {
+  const featuredHerb = await getFeaturedHerb();
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-green-950 via-emerald-950 to-green-900 text-emerald-50">
       <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 sm:py-8">
@@ -71,6 +115,52 @@ export default function HomePage() {
             </p>
           </aside>
         </section>
+
+        {featuredHerb ? (
+          <section className="pb-10">
+            <div className="overflow-hidden rounded-3xl border border-emerald-700/70 bg-white/10 shadow-2xl ring-1 ring-white/10">
+              <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+                {featuredHerb.image_url ? (
+                  <img
+                    src={featuredHerb.image_url}
+                    alt={featuredHerb.image_alt || "Снимка на билка"}
+                    className="h-64 w-full object-cover sm:h-80 lg:h-full"
+                  />
+                ) : (
+                  <div className="flex h-64 flex-col items-center justify-center bg-emerald-950/70 text-emerald-100 sm:h-80 lg:h-full">
+                    <span className="text-6xl" aria-hidden="true">
+                      🌿
+                    </span>
+                    <span className="mt-4 text-sm font-semibold">Няма снимка</span>
+                  </div>
+                )}
+
+                <div className="p-5 sm:p-6 lg:p-8">
+                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-300">
+                    Билка на деня
+                  </p>
+                  <h2 className="mt-3 text-3xl font-bold text-yellow-100 sm:text-4xl">
+                    {featuredHerb.name}
+                  </h2>
+                  {featuredHerb.short_description ? (
+                    <p className="mt-4 leading-7 text-emerald-50">
+                      {featuredHerb.short_description}
+                    </p>
+                  ) : null}
+                  <p className="mt-5 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm leading-6 text-yellow-50">
+                    Информацията е образователна и не замества лекарска консултация.
+                  </p>
+                  <Link
+                    href={`/herbs/${featuredHerb.slug}`}
+                    className="mt-6 inline-flex min-h-12 items-center rounded-2xl bg-yellow-300 px-6 py-3 text-center font-bold text-green-950 shadow-lg transition hover:bg-yellow-200"
+                  >
+                    Виж билката
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="pb-10">
           <div className="max-w-3xl">
